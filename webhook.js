@@ -3,19 +3,13 @@ const router = express.Router();
 const axios = require("axios");
 const { procesarMensaje } = require("./responder");
 
-// Definida con la "A" mayúscula
 const enviarWhatsApp = async (telefono, texto) => {
   try {
-    // 💡 Parche para Argentina: si viene con 5493865..., Meta exige mandar a 543865... (sin el 9)
-    const telefonoLimpio = telefono.startsWith("549") 
-      ? "54" + telefono.slice(3) 
-      : telefono;
-
-    const res = await axios.post(
+    await axios.post(
       `https://graph.facebook.com/v18.0/${process.env.WHATSAPP_PHONE_ID}/messages`,
       {
         messaging_product: "whatsapp",
-        to: telefonoLimpio, // Usamos el número corregido
+        to: telefono,
         type: "text",
         text: { body: texto },
       },
@@ -26,11 +20,33 @@ const enviarWhatsApp = async (telefono, texto) => {
         },
       }
     );
-    console.log("Respuesta Meta:", res.data);
   } catch (err) {
-    console.error("Error completo:", JSON.stringify(err.response?.data, null, 2));
-    console.error("Phone ID usado:", process.env.WHATSAPP_PHONE_ID);
-    console.error("Token usado (primeros 10 chars):", process.env.WHATSAPP_TOKEN?.slice(0, 10));
+    console.error("Error al enviar:", JSON.stringify(err.response?.data, null, 2));
+  }
+};
+
+const enviarImagen = async (telefono, imageUrl, caption) => {
+  try {
+    await axios.post(
+      `https://graph.facebook.com/v18.0/${process.env.WHATSAPP_PHONE_ID}/messages`,
+      {
+        messaging_product: "whatsapp",
+        to: telefono,
+        type: "image",
+        image: {
+          link: imageUrl,
+          caption: caption,
+        },
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.WHATSAPP_TOKEN}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+  } catch (err) {
+    console.error("Error al enviar imagen:", JSON.stringify(err.response?.data, null, 2));
   }
 };
 
@@ -39,7 +55,6 @@ router.get("/", (req, res) => {
   const mode = req.query["hub.mode"];
   const token = req.query["hub.verify_token"];
   const challenge = req.query["hub.challenge"];
-
   if (mode === "subscribe" && token === process.env.WEBHOOK_VERIFY_TOKEN) {
     console.log("Webhook verificado ✅");
     res.status(200).send(challenge);
@@ -52,33 +67,61 @@ router.get("/", (req, res) => {
 router.post("/", async (req, res) => {
   try {
     const body = req.body;
+    if (body.object !== "whatsapp_business_account") return res.sendStatus(404);
 
-    if (body.object !== "whatsapp_business_account") {
-      return res.sendStatus(404);
-    }
-
-    const entry = body.entry?.[0];
-    const changes = entry?.changes?.[0];
-    const value = changes?.value;
-    const messages = value?.messages;
-
-    if (!messages || messages.length === 0) {
-      return res.sendStatus(200);
-    }
+    const messages = body.entry?.[0]?.changes?.[0]?.value?.messages;
+    if (!messages || messages.length === 0) return res.sendStatus(200);
 
     const mensaje = messages[0];
     const telefono = mensaje.from;
-    const texto = mensaje.text?.body;
+    const tipo = mensaje.type; // text, image, audio, video, document, sticker
 
+    console.log(`📩 Mensaje de ${telefono} (tipo: ${tipo})`);
+
+    // Ignorar imágenes silenciosamente
+    if (["image", "video", "document", "sticker"].includes(tipo)) {
+      console.log("🖼️ Imagen/video recibido — ignorando");
+      return res.sendStatus(200);
+    }
+
+    // Audios → responder que no se aceptan
+    if (["audio", "voice"].includes(tipo)) {
+      await enviarWhatsApp(telefono, "⚠️ Este número no recibe audios ni llamadas. Por favor escribinos tu consulta por texto. ¡Gracias! 😊");
+      return res.sendStatus(200);
+    }
+
+    const texto = mensaje.text?.body;
     if (!texto) return res.sendStatus(200);
 
-    console.log(`📩 Mensaje de ${telefono}: ${texto}`);
+    console.log(`💬 Texto: ${texto}`);
 
-    const respuesta = await procesarMensaje(texto);
-    
-    // Llamada corregida con la "A" mayúscula para que coincida con la definición
+    const respuesta = await procesarMensaje(texto, tipo);
+
+    if (!respuesta) return res.sendStatus(200); // null = no contestar
+
+    // Buscar si la respuesta tiene productos con imágenes para enviar como imagen
+    const { query } = require("./db");
+    const terminoLimpio = texto.toLowerCase()
+      .replace(/(precio|stock|tienen|hay|busco|quiero|tenes|hola|buenas)/g, "")
+      .replace(/\s+/g, " ").trim();
+
+    if (terminoLimpio.length > 2) {
+      const productos = await query(
+        `SELECT id, name, price_retail, stock_quantity, image_url
+         FROM products WHERE name ILIKE $1 AND available = true LIMIT 3`,
+        [`%${terminoLimpio}%`]
+      ).catch(() => []);
+
+      // Si hay productos con foto, enviar imagen primero
+      for (const p of productos) {
+        if (p.image_url) {
+          const caption = `🛒 *${p.name}*\n💰 $${Number(p.price_retail).toLocaleString("es-AR")}\n📦 Stock: ${p.stock_quantity} u.\n🔗 https://concepciontecnologia.vercel.app/producto/${p.id}`;
+          await enviarImagen(telefono, p.image_url, caption);
+        }
+      }
+    }
+
     await enviarWhatsApp(telefono, respuesta);
-
     console.log(`✅ Respuesta enviada a ${telefono}`);
     res.sendStatus(200);
   } catch (err) {
