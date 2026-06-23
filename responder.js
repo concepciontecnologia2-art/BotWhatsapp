@@ -212,6 +212,17 @@ const procesarMensaje = async (mensaje, tipo = "text") => {
   }
 
   // =================================================================
+// RESPUESTA MAYOR O MENOR
+// =================================================================
+if (texto.match(/^(mayor|por mayor|precio mayor|mayorista)$/)) {
+  return `🏪 *Precio Mayorista:*\n\nPara ver los precios mayoristas registrate acá:\n🌐 https://concepciontecnologia.vercel.app/mayorista\n\nO escribí *vendedor* para que te atienda alguien del local. 👨‍💼`;
+}
+
+if (texto.match(/^(menor|por menor|precio menor|minorista|precio minorista)$/)) {
+  return `🛒 *Precio Minorista:*\n\nLos precios que te mostré son los precios minoristas.\n\nSi querés hacer el pedido:\n🌐 https://concepciontecnologia.vercel.app/\n\nO escribí *vendedor* para coordinar. 👨‍💼`;
+}
+
+  // =================================================================
   // MAYORISTA / TÉCNICOS
   // =================================================================
   if (texto.match(/(mayorista|tecnico|tecnicos|lista de precios|registrarme|reservar|reserva|mayor)/)) {
