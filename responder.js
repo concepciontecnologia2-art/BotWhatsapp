@@ -178,7 +178,7 @@ const procesarMensaje = async (mensaje, tipo = "text") => {
   // SALUDO → MENÚ
   // =================================================================
   if (texto.match(/^(hola|buenas|buen[ao]s|hi|hey|ola|buenas noches|buenos dias|buenas tardes|buen dia|buena tarde|buena noche)/) && !texto.match(/(precio|cuanto|tenes|hay|stock|busco|quiero|modulo|bateria|pantalla|funda|cable)/)) {
-    return `👋 ¡Bienvenido a *Concepción Tecnología*!\nEspecialistas en repuestos para celulares 📱🔧\n\n¿En qué podemos ayudarte?\n\n1️⃣ Consultar un producto\n2️⃣ Horarios y ubicación 📍\n3️⃣ Hablar con un vendedor por WhatsApp 👨‍💼\n\n_Escribí el número de opción o tu consulta directamente._`;
+    return `👋 ¡Bienvenido a *Concepción Tecnología*!\nEspecialistas en repuestos para celulares, electronica y mucho mas.\n\n¿En qué podemos ayudarte?\n\n1️⃣ Consultar un producto\n2️⃣ Horarios y ubicación 📍\n3️⃣ Hablar con un vendedor por WhatsApp 👨‍💼\n\n_Escribí el número de opción o tu consulta directamente._`;
   }
 
   // OPCIONES DEL MENÚ
