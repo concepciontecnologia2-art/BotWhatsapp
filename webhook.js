@@ -212,7 +212,7 @@ router.post("/", async (req, res) => {
         }
 
         // Mensaje final preguntando mayor o menor
-        await enviarTexto(telefono, `¿Te interesa por *mayor* o *menor*? 😊`);
+        await enviarTexto(telefono, `Por favor, para realizar la compra ingresa en nuestra web.`);
 
         return res.sendStatus(200);
       }
