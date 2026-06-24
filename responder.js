@@ -129,7 +129,7 @@ const procesarMensaje = async (mensaje, tipo = "text") => {
   // DESPEDIDA / CIERRE
   // =================================================================
   if (texto.match(/^(gracias|muchas gracias|gracia|ok gracias|dale gracias|buenas gracias|chau|adios|hasta luego|nos vemos|listo gracias|todo bien gracias|perfecto gracias)$/)) {
-    return `¡Gracias a vos! 😊 Fue un placer ayudarte.\n\nCualquier consulta estamos a disposición. ¡Hasta pronto! 👋\n\n🏪 *Concepción Tecnología*\n📍 Independencia 450, Concepción, Tucumán`;
+return `🙏 *¡Muchas gracias por comunicarte con nosotros!*\n\n🫡 Si necesitás algo más recordá que estamos a tu disposición!\n\n👋😁 ¡Que tengas un excelente día!`;
   }
 
   // =================================================================
@@ -170,7 +170,7 @@ const procesarMensaje = async (mensaje, tipo = "text") => {
     if (abierto) {
       return `✅ *¡Sí, estamos abiertos!*\n\n📍 Calle Independencia 450, Concepción, Tucumán\n🕐 *Lunes a Viernes:* 9:00 a 12:00 hs y 16:00 a 20:00 hs\n🗓️ *Sábados:* 9:00 a 15:00 hs (corrido)\n❌ Domingos y feriados cerrado\n🚗 Zona de fácil estacionamiento\n\n🗺️ https://maps.google.com/?q=Independencia+450+Concepcion+Tucuman`;
     } else {
-      return `😮 *OH NO, ESTAMOS CERRADOS*, pero te atenderemos lo antes posible.\n\n🕒 Lunes a Viernes de 9hs a 12hs y de 16hs a 20hs\n🕒 Sábado de 9hs a 15hs\n🏪 Calle Independencia 450\n\n🔖 Nuestro WSP: https://wa.me/c/5493865630488`;
+return `😮 *OH NO, ESTAMOS CERRADOS*, pero te atenderemos lo antes posible.\n\n☝️😃 *NUESTROS HORARIOS DE ATENCIÓN*\n🕒 HORARIO LUN A VIER DE 9HS A 12HS Y DE 16HS A 20HS\nSÁBADO DE 9HS A 15HS\n🏪 Calle Independencia 450\n📍 https://maps.google.com/?q=Independencia+450+Concepcion+Tucuman`;
     }
   }
 
@@ -194,7 +194,7 @@ const procesarMensaje = async (mensaje, tipo = "text") => {
     }
   }
   if (texto === "3") {
-    return `👨‍💼 *¡Claro! Te comunicamos con nuestro equipo.*\n\nEscribinos directamente y te atendemos:\n📞 https://wa.me/5493865630488\n\n🕐 Horario de atención: L-V 9-12 y 16-20hs · Sáb 9-15hs`;
+return `👨‍💼 *¡Claro! Te comunicamos con nuestro equipo.*\n\n✍️ Escribinos directamente y te atendemos:\n📲 https://wa.me/5493865630488\n\n🕐 HORARIO LUN A VIER DE 9HS A 12HS Y DE 16HS A 20HS\nSÁBADO DE 9HS A 15HS`;
   }
 
   // =================================================================
@@ -270,7 +270,7 @@ if (texto.match(/^(menor|por menor|precio menor|minorista|precio minorista)$/)) 
   // VENDEDOR HUMANO
   // =================================================================
   if (texto.match(/(vendedor|humano|persona|hablar con|atencion|contacto|asesor)/)) {
-    return `👨‍💼 *¡Claro! Te comunicamos con nuestro equipo de atención.*\n\nEscribinos directamente y te atendemos a la brevedad:\n📞 https://wa.me/5493865630488\n\n🕐 Horario: L-V 9-12 y 16-20hs · Sáb 9-15hs`;
+return `👨‍💼 *¡Claro! Te comunicamos con nuestro equipo.*\n\n✍️ Escribinos directamente y te atendemos:\n📲 https://wa.me/5493865630488\n\n🕐 HORARIO LUN A VIER DE 9HS A 12HS Y DE 16HS A 20HS\nSÁBADO DE 9HS A 15HS`;
   }
 
   // =================================================================
