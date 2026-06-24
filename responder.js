@@ -298,7 +298,7 @@ return `👨‍💼 *¡Claro! Te comunicamos con nuestro equipo.*\n\n✍️ Escr
       `${stockEmoji(p.stock_quantity)} *${p.name}* — ${fmt(Number(p.price_retail))}`
     ).join("\n");
 
-    return `¿Te interesa por *mayor* o *menor*? 😊\n🔍 Esto encontré en el sistema:\n\n${resumen}Te mando el detalle completo con foto y link de cada uno.`;
+    return `¿Te interesa por *mayor* o *menor*? 😊\n🔍 Esto encontré en el sistema:\n\n Te mando el detalle completo con foto y link de cada uno.`;
   }
 
   // =================================================================
