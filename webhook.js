@@ -212,7 +212,7 @@ router.post("/", async (req, res) => {
         }
 
         // Mensaje final preguntando mayor o menor
-        await enviarTexto(telefono, `Por favor, para realizar la compra ingresa en nuestra web.`);
+        await enviarTexto(telefono, `Por favor, para realizar la compra ingresa en el link correspondiente al producto que elijas, ahi podras ver un boton directo a compra mayorista. Espero haberte ayudado.`);
 
         return res.sendStatus(200);
       }
