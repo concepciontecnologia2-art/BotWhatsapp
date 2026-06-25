@@ -64,11 +64,9 @@ const expandirTermino = (texto) => {
 };
 
 const buscarProductos = async (termino) => {
-  // Buscar con el término expandido
   const terminoExpandido = expandirTermino(normalizar(termino));
   const palabras = terminoExpandido.split(" ").filter(p => p.length > 1);
 
-  // Intentar búsqueda exacta primero
   let resultados = await query(
     `SELECT p.id, p.name, p.price_retail, p.price_wholesale, p.stock_quantity, p.stock_level, p.available, p.image_url
      FROM products p
@@ -77,7 +75,6 @@ const buscarProductos = async (termino) => {
     [`%${terminoExpandido}%`]
   );
 
-  // Si no encuentra, buscar por palabras individuales
   if (resultados.length === 0 && palabras.length > 1) {
     for (const palabra of palabras) {
       if (palabra.length < 2) continue;
@@ -129,7 +126,7 @@ const procesarMensaje = async (mensaje, tipo = "text") => {
   // DESPEDIDA / CIERRE
   // =================================================================
   if (texto.match(/^(gracias|muchas gracias|gracia|ok gracias|dale gracias|buenas gracias|chau|adios|hasta luego|nos vemos|listo gracias|todo bien gracias|perfecto gracias)$/)) {
-return `🙏 *¡Muchas gracias por comunicarte con nosotros!*\n\n🫡 Si necesitás algo más recordá que estamos a tu disposición!\n\n👋😁 ¡Que tengas un excelente día!`;
+    return `🙏 *¡Muchas gracias por comunicarte con nosotros!*\n\n🫡 Si necesitás algo más recordá que estamos a tu disposición!\n\n👋😁 ¡Que tengas un excelente día!`;
   }
 
   // =================================================================
@@ -170,7 +167,7 @@ return `🙏 *¡Muchas gracias por comunicarte con nosotros!*\n\n🫡 Si necesit
     if (abierto) {
       return `✅ *¡Sí, estamos abiertos!*\n\n📍 Calle Independencia 450, Concepción, Tucumán\n🕐 *Lunes a Viernes:* 9:00 a 12:00 hs y 16:00 a 20:00 hs\n🗓️ *Sábados:* 9:00 a 15:00 hs (corrido)\n❌ Domingos y feriados cerrado\n🚗 Zona de fácil estacionamiento\n\n🗺️ https://maps.google.com/?q=Independencia+450+Concepcion+Tucuman`;
     } else {
-return `😮 *OH NO, ESTAMOS CERRADOS*, pero te atenderemos lo antes posible.\n\n☝️😃 *NUESTROS HORARIOS DE ATENCIÓN*\n🕒 HORARIO LUN A VIER DE 9HS A 12HS Y DE 16HS A 20HS\nSÁBADO DE 9HS A 15HS\n🏪 Calle Independencia 450\n📍 https://maps.google.com/?q=Independencia+450+Concepcion+Tucuman`;
+      return `😮 *OH NO, ESTAMOS CERRADOS*, pero te atenderemos lo antes posible.\n\n☝️😃 *NUESTROS HORARIOS DE ATENCIÓN*\n🕒 HORARIO LUN A VIER DE 9HS A 12HS Y DE 16HS A 20HS\nSÁBADO DE 9HS A 15HS\n🏪 Calle Independencia 450\n📍 https://maps.google.com/?q=Independencia+450+Concepcion+Tucuman`;
     }
   }
 
@@ -194,7 +191,7 @@ return `😮 *OH NO, ESTAMOS CERRADOS*, pero te atenderemos lo antes posible.\n\
     }
   }
   if (texto === "3") {
-return `👨‍💼 *¡Claro! Te comunicamos con nuestro equipo.*\n\n✍️ Escribinos directamente y te atendemos:\n📲 https://wa.me/5493865630488\n\n🕐 HORARIO LUN A VIER DE 9HS A 12HS Y DE 16HS A 20HS\nSÁBADO DE 9HS A 15HS`;
+    return `👨‍💼 *¡Claro! Te comunicamos con nuestro equipo.*\n\n✍️ Escribinos directamente y te atendemos:\n📲 https://wa.me/5493865630488\n\n🕐 HORARIO LUN A VIER DE 9HS A 12HS Y DE 16HS A 20HS\nSÁBADO DE 9HS A 15HS`;
   }
 
   // =================================================================
@@ -203,24 +200,6 @@ return `👨‍💼 *¡Claro! Te comunicamos con nuestro equipo.*\n\n✍️ Escr
   if (texto.match(/(reparacion|arregla|arreglan|servicio tecnico|colocacion|cambiar pantalla|cambiar bateria|cuanto cuesta cambiar|cuanto tardan)/)) {
     return `🛠️ *Información sobre Servicio Técnico:*\n\nNo hacemos servicio técnico de colocación o reparación. 🛠️❌\n\nTrabajamos directo con los técnicos ya que *hay que probar los repuestos en el local*, de lo contrario salen sin garantía con la boleta.\n\n¿Puedo ayudarte con algo más? 😊`;
   }
-
-  // =================================================================
-  // FUNDA → MAYOR O MENOR
-  // =================================================================
-  if (texto.match(/(funda|vidrio|templado|tapa trasera|carcasa)/) && !texto.match(/(mayor|menor)/)) {
-    return `📱 ¡Sí tenemos! ¿Deseás por:\n\n✳️ *Mayor*\n✳️ *Menor*\n\nEscribí tu opción y el modelo de tu celular para darte el precio.`;
-  }
-
-  // =================================================================
-// RESPUESTA MAYOR O MENOR
-// =================================================================
-if (texto.match(/^(mayor|por mayor|precio mayor|mayorista)$/)) {
-  return `🏪 *Precio Mayorista:*\n\nPara ver los precios mayoristas registrate acá:\n🌐 https://concepciontecnologia.vercel.app/mayorista\n\nO escribí *vendedor* para que te atienda alguien del local. 👨‍💼`;
-}
-
-if (texto.match(/^(menor|por menor|precio menor|minorista|precio minorista)$/)) {
-  return `🛒 *Precio Minorista:*\n\nLos precios que te mostré son los precios minoristas.\n\nSi querés hacer el pedido:\n🌐 https://concepciontecnologia.vercel.app/\n\nO escribí *vendedor* para coordinar. 👨‍💼`;
-}
 
   // =================================================================
   // MAYORISTA / TÉCNICOS
@@ -237,12 +216,12 @@ if (texto.match(/^(menor|por menor|precio menor|minorista|precio minorista)$/)) 
   // =================================================================
   if (texto.match(/(perfume|saphirus|vishnu|arabe|fragancia|sahumerio|asad|masa|yara|badee|blush|lattafa)/)) {
     if (texto.match(/(recomienda|recomendas|hombre|mujer|mas vendido)/)) {
-      return `🧴 *Recomendaciones Exclusivas:*\n\n🏆 *El más vendido:* Al Dur Al Maknoon 🥇\n\n🧔 *Para Hombre:* Asad, Masa, Al Dur Al Maknoon Silver.\n👩 *Para Mujer:* Yara 100 ML, Yara Candy, Badee Al Oud Noble BLUSH.\n\n✨ _¡Toda la línea árabe es 100% ORIGINAL!_\n\n¿Te interesa por mayor o por menor? 😊`;
+      return `🧴 *Recomendaciones Exclusivas:*\n\n🏆 *El más vendido:* Al Dur Al Maknoon 🥇\n\n🧔 *Para Hombre:* Asad, Masa, Al Dur Al Maknoon Silver.\n👩 *Para Mujer:* Yara 100 ML, Yara Candy, Badee Al Oud Noble BLUSH.\n\n✨ _¡Toda la línea árabe es 100% ORIGINAL!_\n\n¿Querés más info? Escribí *vendedor* o visitá nuestra tienda. 😊`;
     }
     if (texto.match(/(economico|barato)/)) {
-      return `💰 *Perfumes Económicos:* Tenemos la línea *Maison Alhambra de 30ml* a solo *$20.000*.\n\n¿Te interesa por mayor o por menor? 😊`;
+      return `💰 *Perfumes Económicos:* Tenemos la línea *Maison Alhambra de 30ml* a solo *$20.000*.\n\n¿Querés más info? Escribí *vendedor* o visitá nuestra tienda. 😊`;
     }
-    return `🛍️ *Perfumería & Fragancias:*\n• Toda la línea de *Saphirus* y Sahumerios *Vishnu*.\n• Gran variedad de *Perfumería Árabe* original (*Lattafa*, *Maison Alhambra*, etc.).\n\nEn el local podés sentir las fragancias. 👃\n\n¿Te interesa por mayor o por menor? 😊`;
+    return `🛍️ *Perfumería & Fragancias:*\n• Toda la línea de *Saphirus* y Sahumerios *Vishnu*.\n• Gran variedad de *Perfumería Árabe* original (*Lattafa*, *Maison Alhambra*, etc.).\n\nEn el local podés sentir las fragancias. 👃\n\n¿Querés más info? Escribí *vendedor* o visitá nuestra tienda. 😊`;
   }
 
   // =================================================================
@@ -270,7 +249,7 @@ if (texto.match(/^(menor|por menor|precio menor|minorista|precio minorista)$/)) 
   // VENDEDOR HUMANO
   // =================================================================
   if (texto.match(/(vendedor|humano|persona|hablar con|atencion|contacto|asesor)/)) {
-return `👨‍💼 *¡Claro! Te comunicamos con nuestro equipo.*\n\n✍️ Escribinos directamente y te atendemos:\n📲 https://wa.me/5493865630488\n\n🕐 HORARIO LUN A VIER DE 9HS A 12HS Y DE 16HS A 20HS\nSÁBADO DE 9HS A 15HS`;
+    return `👨‍💼 *¡Claro! Te comunicamos con nuestro equipo.*\n\n✍️ Escribinos directamente y te atendemos:\n📲 https://wa.me/5493865630488\n\n🕐 HORARIO LUN A VIER DE 9HS A 12HS Y DE 16HS A 20HS\nSÁBADO DE 9HS A 15HS`;
   }
 
   // =================================================================
@@ -293,12 +272,11 @@ return `👨‍💼 *¡Claro! Te comunicamos con nuestro equipo.*\n\n✍️ Escr
       return `😕 No encontré ese producto en el sistema.\n\nPor favor indicanos la *marca y modelo exacto* (ej: _Samsung A15, Moto G54, iPhone 13_) y qué componente buscás.\n\nO escribí al local directamente:\n📞 https://wa.me/5493865630488`;
     }
 
-    // Preguntar mayor o menor + mostrar resumen
     const resumen = productos.map(p =>
-      `${stockEmoji(p.stock_quantity)} *${p.name}* — ${fmt(Number(p.price_retail))}`
-    ).join("\n");
+      `${stockEmoji(p.stock_quantity)} *${p.name}*\n💰 Precio mayorista: ${fmt(Number(p.price_wholesale))}\n🔗 https://concepciontecnologia.vercel.app/producto/${p.id}`
+    ).join("\n\n");
 
-    return `¿Te interesa por *mayor* o *menor*? 😊\n🔍 Esto encontré en el sistema:\n\n Te mando el detalle completo con foto y link de cada uno.`;
+    return `🔍 *Esto encontré en el sistema:*\n\n${resumen}\n\n🟢 En stock · 🔴 Sin stock\n\n¿Querés coordinar un pedido? Escribí *vendedor* o visitá nuestra tienda:\n🌐 https://concepciontecnologia.vercel.app/mayorista`;
   }
 
   // =================================================================
