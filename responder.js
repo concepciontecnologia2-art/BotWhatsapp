@@ -9,17 +9,15 @@ const fmt = (n) =>
 
 const stockEmoji = (quantity) => (quantity > 0 ? "🟢" : "🔴");
 
-// Normalizar texto: quitar acentos, pasar a minúsculas, limpiar
 const normalizar = (texto) =>
   texto
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "") // quita acentos
-    .replace(/[^a-z0-9\s]/g, " ")   // quita caracteres especiales
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9\s]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
 
-// Expandir abreviaturas y plurales comunes
 const expandirTermino = (texto) => {
   return texto
     .replace(/\bmodulos?\b/g, "modulo")
@@ -39,11 +37,9 @@ const expandirTermino = (texto) => {
     .replace(/\bperfumes?\b/g, "perfume")
     .replace(/\brepuestos?\b/g, "repuesto")
     .replace(/\bcelulares?\b/g, "celular")
-    // Marcas sin nombre completo
     .replace(/\bsam\b/g, "samsung")
     .replace(/\bmoto\b/g, "motorola")
     .replace(/\biph\b/g, "iphone")
-    // Modelos conocidos sin marca
     .replace(/\bj2 prime\b/g, "samsung j2 prime")
     .replace(/\bj4\b/g, "samsung j4")
     .replace(/\bj5\b/g, "samsung j5")
@@ -106,32 +102,31 @@ const estaAbierto = () => {
 
 const procesarMensaje = async (mensaje, tipo = "text") => {
 
-  // IMAGEN → pedir que escriba
   if (["image", "video", "sticker"].includes(tipo)) {
     return `📝 Por favor escribí el nombre del producto que buscás y te ayudamos enseguida. 😊`;
   }
-
-  // AUDIO → rechazar
   if (["audio", "voice"].includes(tipo)) {
     return `⚠️ Este número no recibe audios ni llamadas. Por favor escribinos tu consulta por texto. ¡Gracias! 😊`;
   }
-
-  // DOCUMENTO → ignorar
   if (tipo === "document") return null;
 
   const textoOriginal = mensaje.trim();
   const texto = normalizar(textoOriginal);
 
-  // =================================================================
-  // DESPEDIDA / CIERRE
-  // =================================================================
+  // DESPEDIDA
   if (texto.match(/^(gracias|muchas gracias|gracia|ok gracias|dale gracias|buenas gracias|chau|adios|hasta luego|nos vemos|listo gracias|todo bien gracias|perfecto gracias)$/)) {
     return `🙏 *¡Muchas gracias por comunicarte con nosotros!*\n\n🫡 Si necesitás algo más recordá que estamos a tu disposición!\n\n👋😁 ¡Que tengas un excelente día!`;
   }
 
-  // =================================================================
-  // FILTRO: LO QUE NO VENDEN
-  // =================================================================
+  // MAYOR O MENOR
+  if (texto.match(/^(mayor|por mayor|precio mayor|mayorista)$/)) {
+    return `🏪 *Precio Mayorista:*\n\nPara ver los precios mayoristas registrate acá:\n🌐 https://concepciontecnologia.vercel.app/mayorista\n\nO escribí *vendedor* para que te atienda alguien del local. 👨‍💼`;
+  }
+  if (texto.match(/^(menor|por menor|precio menor|minorista|precio minorista)$/)) {
+    return `🛒 *Precio Minorista:*\n\nVisitá nuestra tienda para ver todos los precios:\n🌐 https://concepciontecnologia.vercel.app/\n\nO escribí *vendedor* para coordinar. 👨‍💼`;
+  }
+
+  // LO QUE NO VENDEN
   if (texto.match(/(camara delantera|camara trasera|camara de celular|camara de fotos)/)) {
     return `Solo vendemos cámaras de seguridad. 📹 No vendemos el repuesto de la cámara interna del celular.\n\n¿Puedo ayudarte con algo más? 😊`;
   }
@@ -145,23 +140,17 @@ const procesarMensaje = async (mensaje, tipo = "text") => {
     return `Por el momento no trabajamos con líneas de cremas ni maquillaje. 😕\n\n¿Puedo ayudarte con algo más?`;
   }
 
-  // =================================================================
   // FACTURA
-  // =================================================================
   if (texto.match(/(factura|comprobante|emiten factura|hacen factura)/)) {
     return `✅ *¡Sí! Emitimos factura o comprobante de compra.*\n\nPodés solicitarla al momento de tu compra en el local o coordinar con un vendedor.\n\nEscribí *vendedor* si querés coordinar. 👨‍💼`;
   }
 
-  // =================================================================
   // REDES SOCIALES
-  // =================================================================
   if (texto.match(/(redes sociales|instagram|facebook|tiktok|redes|ig|fb)/)) {
     return `📱 *Nuestras Redes Sociales:*\n\n📘 Facebook: https://www.facebook.com/share/1GtkZrvC6L/?mibextid=wwXIfr\n📸 Instagram: https://www.instagram.com/concepciontecnologia\n🎵 TikTok: https://www.tiktok.com/@concepciontecnologia\n\n¡Seguinos para ver novedades y ofertas! 🔔`;
   }
 
-  // =================================================================
   // HORARIO / UBICACIÓN
-  // =================================================================
   if (texto.match(/(horario|hora|cuando abren|estan abiertos|abierto|cerrado|hasta que hora|sabado|donde estan|direccion|ubicacion|local|donde queda|estacionamiento)/)) {
     const abierto = estaAbierto();
     if (abierto) {
@@ -171,11 +160,9 @@ const procesarMensaje = async (mensaje, tipo = "text") => {
     }
   }
 
-  // =================================================================
   // SALUDO → MENÚ
-  // =================================================================
   if (texto.match(/^(hola|buenas|buen[ao]s|hi|hey|ola|buenas noches|buenos dias|buenas tardes|buen dia|buena tarde|buena noche)/) && !texto.match(/(precio|cuanto|tenes|hay|stock|busco|quiero|modulo|bateria|pantalla|funda|cable)/)) {
-    return `👋 ¡Bienvenido a *Concepción Tecnología*!\nEspecialistas en repuestos para celulares, electronica y mucho mas.\n\n¿En qué podemos ayudarte?\n\n1️⃣ Consultar un producto\n2️⃣ Horarios y ubicación 📍\n3️⃣ Hablar con un vendedor por WhatsApp 👨‍💼\n\n_Escribí el número de opción o tu consulta directamente._`;
+    return `👋 ¡Bienvenido a *Concepción Tecnología*!\nEspecialistas en repuestos para celulares, electrónica y mucho más.\n\n¿En qué podemos ayudarte?\n\n1️⃣ Consultar un producto\n2️⃣ Horarios y ubicación 📍\n3️⃣ Hablar con un vendedor por WhatsApp 👨‍💼\n\n_Escribí el número de opción o tu consulta directamente._`;
   }
 
   // OPCIONES DEL MENÚ
@@ -194,26 +181,20 @@ const procesarMensaje = async (mensaje, tipo = "text") => {
     return `👨‍💼 *¡Claro! Te comunicamos con nuestro equipo.*\n\n✍️ Escribinos directamente y te atendemos:\n📲 https://wa.me/5493865630488\n\n🕐 HORARIO LUN A VIER DE 9HS A 12HS Y DE 16HS A 20HS\nSÁBADO DE 9HS A 15HS`;
   }
 
-  // =================================================================
   // REPARACIONES
-  // =================================================================
   if (texto.match(/(reparacion|arregla|arreglan|servicio tecnico|colocacion|cambiar pantalla|cambiar bateria|cuanto cuesta cambiar|cuanto tardan)/)) {
     return `🛠️ *Información sobre Servicio Técnico:*\n\nNo hacemos servicio técnico de colocación o reparación. 🛠️❌\n\nTrabajamos directo con los técnicos ya que *hay que probar los repuestos en el local*, de lo contrario salen sin garantía con la boleta.\n\n¿Puedo ayudarte con algo más? 😊`;
   }
 
-  // =================================================================
   // MAYORISTA / TÉCNICOS
-  // =================================================================
-  if (texto.match(/(mayorista|tecnico|tecnicos|lista de precios|registrarme|reservar|reserva|mayor)/)) {
+  if (texto.match(/(mayorista|tecnico|tecnicos|lista de precios|registrarme|reservar|reserva)/)) {
     if (texto.match(/(reserva|reservar)/)) {
       return `💵 *Reserva de Componentes:*\n\n¡Sí! Podés reservar tus repuestos asegurando el stock mediante una *transferencia bancaria/virtual*. Escribí *vendedor* para coordinar el pago.`;
     }
     return `🏪 *Atención a Técnicos y Mayoristas:*\n\n• 🛍️ *Compra Mínima Perfumes:* 3 unidades iguales o surtidas de 100ml.\n• 💵 *Descuentos Efectivo:* 3% en compras de $150.000 y 5% en compras de $250.000.\n• 📱 *Registro Mayorista:*\n🌐 https://concepciontecnologia.vercel.app/mayorista\n\n🚚 Repartos a locales comerciales en Concepción de Lunes a Sábados.`;
   }
 
-  // =================================================================
   // PERFUMERÍA
-  // =================================================================
   if (texto.match(/(perfume|saphirus|vishnu|arabe|fragancia|sahumerio|asad|masa|yara|badee|blush|lattafa)/)) {
     if (texto.match(/(recomienda|recomendas|hombre|mujer|mas vendido)/)) {
       return `🧴 *Recomendaciones Exclusivas:*\n\n🏆 *El más vendido:* Al Dur Al Maknoon 🥇\n\n🧔 *Para Hombre:* Asad, Masa, Al Dur Al Maknoon Silver.\n👩 *Para Mujer:* Yara 100 ML, Yara Candy, Badee Al Oud Noble BLUSH.\n\n✨ _¡Toda la línea árabe es 100% ORIGINAL!_\n\n¿Querés más info? Escribí *vendedor* o visitá nuestra tienda. 😊`;
@@ -224,37 +205,27 @@ const procesarMensaje = async (mensaje, tipo = "text") => {
     return `🛍️ *Perfumería & Fragancias:*\n• Toda la línea de *Saphirus* y Sahumerios *Vishnu*.\n• Gran variedad de *Perfumería Árabe* original (*Lattafa*, *Maison Alhambra*, etc.).\n\nEn el local podés sentir las fragancias. 👃\n\n¿Querés más info? Escribí *vendedor* o visitá nuestra tienda. 😊`;
   }
 
-  // =================================================================
   // ENVÍOS
-  // =================================================================
   if (texto.match(/(envio|domicilio|entrega|mandar|costo del envio|reparto)/)) {
     return `🚚 *Información de Envíos y Repartos:*\n\n• 📍 *En Concepción:* Entregas a locales L-S. Gratis si llevás un módulo o el pedido supera $10.000.\n• 🗓️ *Ruta de los Jueves:* Monteros · León Rouges · Villa Quinteros · Río Seco · Arcadia · Trinidad · Aguilares · Los Sarmientos · Río Chico · Santa Ana · Alberdi.\n\n📋 *Envíos Gratis por Mayor:*\n• 🔌 Electrónica: compras mayores a $80.000\n• 🧴 Saphirus: $30.000 en Concepción / $40.000 resto de provincia.`;
   }
 
-  // =================================================================
   // MÉTODOS DE PAGO
-  // =================================================================
   if (texto.match(/(pago|cuotas|pagar|tarjeta|transferencia|efectivo|metodo de pago)/)) {
     return `💳 *Formas de Pago:*\n\n• 📲 *Por Menor:* Transferencias y tarjetas en un solo pago SIN INTERÉS.\n• ❌ *Por Mayor:* Solo efectivo o transferencia.`;
   }
 
-  // =================================================================
   // PEDIDOS / TIENDA WEB
-  // =================================================================
   if (texto.match(/(pedido|comprar|quiero comprar|hacer pedido|tienda|pagina web|link|web)/)) {
     return `🛒 *¿Cómo hacer tu pedido?*\n\nPodés armar tu pedido o registrarte como mayorista en nuestra tienda:\n🌐 https://concepciontecnologia.vercel.app/\n\n📌 *Una vez enviado el pedido desde la web, la compra se concreta directamente con el dueño del local quien te va a contactar para coordinar el pago y la entrega.*`;
   }
 
-  // =================================================================
   // VENDEDOR HUMANO
-  // =================================================================
   if (texto.match(/(vendedor|humano|persona|hablar con|atencion|contacto|asesor)/)) {
     return `👨‍💼 *¡Claro! Te comunicamos con nuestro equipo.*\n\n✍️ Escribinos directamente y te atendemos:\n📲 https://wa.me/5493865630488\n\n🕐 HORARIO LUN A VIER DE 9HS A 12HS Y DE 16HS A 20HS\nSÁBADO DE 9HS A 15HS`;
   }
 
-  // =================================================================
-  // BÚSQUEDA DINÁMICA EN BASE DE DATOS
-  // =================================================================
+  // BÚSQUEDA DINÁMICA
   let limpio = texto
     .replace(/(hola|buenas|buenos dias|buenas tardes|buenas noches|buen dia|che|como estas|todo bien)/g, "")
     .replace(/(consulta|queria saber|por favor|porfa|me podrias decir)/g, "")
@@ -272,16 +243,15 @@ const procesarMensaje = async (mensaje, tipo = "text") => {
       return `😕 No encontré ese producto en el sistema.\n\nPor favor indicanos la *marca y modelo exacto* (ej: _Samsung A15, Moto G54, iPhone 13_) y qué componente buscás.\n\nO escribí al local directamente:\n📞 https://wa.me/5493865630488`;
     }
 
+    // Devolver resumen — el webhook envía foto+link por separado
     const resumen = productos.map(p =>
-      `${stockEmoji(p.stock_quantity)} *${p.name}*\n💰 Precio mayorista: ${fmt(Number(p.price_wholesale))}\n🔗 https://concepciontecnologia.vercel.app/producto/${p.id}`
+      `${stockEmoji(p.stock_quantity)} *${p.name}*\n💰 Precio mayorista: ${fmt(Number(p.price_wholesale))}`
     ).join("\n\n");
 
-    return `🔍 *Esto encontré en el sistema:*\n\n${resumen}\n\n🟢 En stock · 🔴 Sin stock\n\n¿Querés coordinar un pedido? Escribí *vendedor* o visitá nuestra tienda:\n🌐 https://concepciontecnologia.vercel.app/mayorista`;
+    return `🔍 *Esto encontré en el sistema:*\n\n${resumen}\n\n🟢 En stock`;
   }
 
-  // =================================================================
-  // RESPUESTA POR DEFECTO — PALABRA DESCONOCIDA
-  // =================================================================
+  // RESPUESTA POR DEFECTO
   return `No entendí bien tu consulta 😅\n\nTe comunicamos con el local para que te ayuden:\n📞 https://wa.me/5493865630488\n\nO escribí directamente lo que buscás. 😊`;
 };
 
