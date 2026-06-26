@@ -101,30 +101,23 @@ const enviarImagen = async (telefono, imageUrl, caption) => {
 
 const buscarProductosDB = async (termino) => {
   const terminoExpandido = expandirTermino(termino);
-  const palabras = terminoExpandido.split(" ").filter(p => p.length > 1);
-
-  // Creamos un filtro de búsqueda más preciso usando AND
-  // Esto busca productos que tengan AMBAS palabras (ej: 'bateria' AND 'samsung')
-  const condiciones = palabras.map(() => `p.name ILIKE ?`).join(" AND ");
-  const valores = palabras.map(p => `%${p}%`);
-
-  // Ajuste para usar sintaxis de tu cliente DB (asumiendo que usa $1, $2, etc.)
-  // Si tu DB usa ?, reemplaza $1, $2 por ?
-  let queryStr = `SELECT p.id, p.name, p.price_wholesale, p.stock_quantity, p.image_url
-                  FROM products p
-                  WHERE p.available = true AND (p.name ILIKE $1)`;
   
-  // Si hay más de una palabra, forzamos a que el nombre contenga todas
-  // Nota: Esto es un filtro restrictivo.
-  let resultados = await query(
+  // Usamos el término completo para una búsqueda que incluya todas las palabras
+  // Esto obliga a que el nombre del producto contenga todo lo que el usuario escribió
+  // (Ej: "modulo", "motorola", "g20")
+  
+  const resultados = await query(
     `SELECT p.id, p.name, p.price_wholesale, p.stock_quantity, p.image_url
      FROM products p
-     WHERE p.available = true AND p.name ILIKE $1
+     WHERE p.available = true 
+     AND p.name ILIKE $1 
      ORDER BY p.name ASC LIMIT 5`,
-    [`%${terminoExpandido}%`]
-  ).catch(() => []);
+    [`%${terminoExpandido}%`] // Esto busca que el producto tenga todas las palabras del término
+  ).catch((err) => {
+    console.error("Error en DB:", err);
+    return [];
+  });
 
-  // Si no encuentra nada exacto, probamos búsqueda flexible pero priorizando
   return resultados;
 };
 // Verificación webhook
