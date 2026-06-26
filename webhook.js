@@ -198,40 +198,47 @@ router.post("/", async (req, res) => {
       !texto.match(/(horario|factura|envio|pago|redes|vendedor|mayorista|tecnico|pedido|web|reparacion|perfume|funda|vidrio|gracias|chau)/i);
 
     if (esBusqueda) {
-      const productos = await buscarProductosDB(textoNorm);
+      let productos = [];
+
+      // LÓGICA ESPECIAL PARA FUNDAS
+      if (textoNorm.includes("funda")) {
+        // Buscamos productos que tengan "funda" o "carcasa" o "protector"
+        // Forzamos un OR para tener más resultados
+        productos = await query(
+          `SELECT id, name, price_wholesale, stock_quantity, image_url 
+           FROM products 
+           WHERE available = true 
+           AND (name ILIKE '%funda%' OR name ILIKE '%carcasa%' OR name ILIKE '%protector%') 
+           ORDER BY name ASC LIMIT 5`
+        ).catch(() => []);
+      } else {
+        // LÓGICA NORMAL PARA EL RESTO
+        productos = await buscarProductosDB(textoNorm);
+      }
 
       if (productos.length > 0) {
-        // 1. Enviamos el mensaje de texto de respuesta primero
         await enviarTexto(telefono, respuesta);
         
-        // 2. Iteramos cada producto
         for (const p of productos) {
-          console.log("Producto encontrado:", p.name, "ID:", p.id);
+          // El ID ahora está garantizado porque el SELECT lo pide explícitamente
           const link = `https://concepciontecnologia.vercel.app/mayorista/producto/${p.id}`;
           
-          // Limpieza de precio
           const precioLimpio = typeof p.price_wholesale === 'string' 
             ? p.price_wholesale.replace(/[^0-9.-]+/g, "") 
             : p.price_wholesale;
           const precio = Number(precioLimpio || 0);
 
-          // Construimos el caption CON el link
           const caption = `${stockEmoji(p.stock_quantity)} *${p.name}*\n💰 Precio: ${fmt(precio)}\n📦 Stock: ${p.stock_quantity} unidades\n🔗 ${link}`;
 
-          // Enviar imagen o texto según corresponda
           if (p.image_url) {
             await enviarImagen(telefono, p.image_url, caption);
           } else {
             await enviarTexto(telefono, caption);
           }
-          
-          // Pequeña pausa
           await new Promise(r => setTimeout(r, 500));
         }
 
-        // 3. MENSAJE FINAL (Solo después de mostrar los productos)
         await enviarTexto(telefono, `Por favor, para realizar la compra ingresa en el link correspondiente al producto que elijas. Si deseas comprarlo por mayorista, ahi mismo veras un boton directo a compra mayorista. Espero haberte ayudado.`);
-        
         return res.sendStatus(200);
       }
     }
