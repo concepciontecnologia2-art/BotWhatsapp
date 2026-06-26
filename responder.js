@@ -167,7 +167,7 @@ const procesarMensaje = async (mensaje, tipo = "text") => {
 
   // OPCIONES DEL MENÚ
   if (texto === "1") {
-    return `🔍 ¡Perfecto! Escribime el nombre del producto o repuesto que buscás.\n\nEjemplo: _batería samsung a20_, _módulo moto g54_, _funda iphone 13_`;
+    return `🔍 ¡Perfecto! Escribime el nombre del producto o repuesto que buscás.\n\nEjemplo: _batería samsung a20_, _módulo motorola g54_, _pava electrica_, linternas...etc y mucho mas!`;
   }
   if (texto === "2") {
     const abierto = estaAbierto();
