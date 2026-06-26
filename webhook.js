@@ -266,7 +266,7 @@ const timer = setTimeout(async () => {
     
     // Limpiamos el mapa después de enviar
     timers.delete(telefono);
-}, 2 * 60 * 1000); // 2 minutos
+}, 5 * 60 * 1000); // 2 minutos
 
     timers.set(telefono, timer);
 }
