@@ -122,6 +122,16 @@ const buscarProductosDB = async (termino) => {
     return [];
   });
 
+  // 2. INTENTO 2: Si no encuentra nada, búsqueda amplia (OR)
+  if (resultados.length === 0) {
+    const condicionesOr = palabras.map((_, i) => `p.name ILIKE $${i + 1}`).join(" OR ");
+    let sqlOr = `SELECT p.id, p.name, p.price_wholesale, p.stock_quantity, p.image_url 
+                 FROM products p WHERE p.available = true AND (${condicionesOr}) 
+                 ORDER BY p.name ASC LIMIT 5`;
+    
+    resultados = await query(sqlOr, valores).catch(() => []);
+  }
+  
   return resultados;
 };
 
