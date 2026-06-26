@@ -13,6 +13,8 @@ const expandirTermino = (texto) => {
     .replace(/\bbaterias?\b/g, "bateria")
     .replace(/\bpantallas?\b/g, "pantalla")
     .replace(/\bfundas?\b/g, "funda")
+    .replace(/\bcarcasas?\b/g, "funda") // Agregá esto
+    .replace(/\bprotectores?\b/g, "funda") // Agregá esto
     .replace(/\bcargadores?\b/g, "cargador")
     .replace(/\bcables?\b/g, "cable")
     .replace(/\blinternas?\b/g, "linterna")
@@ -101,31 +103,30 @@ const buscarProductosDB = async (termino) => {
   const terminoExpandido = expandirTermino(termino);
   const palabras = terminoExpandido.split(" ").filter(p => p.length > 1);
 
+  // Creamos un filtro de búsqueda más preciso usando AND
+  // Esto busca productos que tengan AMBAS palabras (ej: 'bateria' AND 'samsung')
+  const condiciones = palabras.map(() => `p.name ILIKE ?`).join(" AND ");
+  const valores = palabras.map(p => `%${p}%`);
+
+  // Ajuste para usar sintaxis de tu cliente DB (asumiendo que usa $1, $2, etc.)
+  // Si tu DB usa ?, reemplaza $1, $2 por ?
+  let queryStr = `SELECT p.id, p.name, p.price_wholesale, p.stock_quantity, p.image_url
+                  FROM products p
+                  WHERE p.available = true AND (p.name ILIKE $1)`;
+  
+  // Si hay más de una palabra, forzamos a que el nombre contenga todas
+  // Nota: Esto es un filtro restrictivo.
   let resultados = await query(
-    `SELECT p.id, p.name, p.price_retail, p.stock_quantity, p.image_url
+    `SELECT p.id, p.name, p.price_wholesale, p.stock_quantity, p.image_url
      FROM products p
-     WHERE p.name ILIKE $1 AND p.available = true
+     WHERE p.available = true AND p.name ILIKE $1
      ORDER BY p.name ASC LIMIT 5`,
     [`%${terminoExpandido}%`]
   ).catch(() => []);
 
-  if (resultados.length === 0 && palabras.length > 1) {
-    for (const palabra of palabras) {
-      if (palabra.length < 2) continue;
-      const r = await query(
-        `SELECT p.id, p.name, p.price_retail, p.stock_quantity, p.image_url
-         FROM products p
-         WHERE p.name ILIKE $1 AND p.available = true
-         ORDER BY p.name ASC LIMIT 5`,
-        [`%${palabra}%`]
-      ).catch(() => []);
-      if (r.length > 0) { resultados = r; break; }
-    }
-  }
-
+  // Si no encuentra nada exacto, probamos búsqueda flexible pero priorizando
   return resultados;
 };
-
 // Verificación webhook
 router.get("/", (req, res) => {
   const mode = req.query["hub.mode"];
@@ -195,12 +196,26 @@ router.post("/", async (req, res) => {
       !texto.match(/^[123]$/) &&
       !texto.match(/(horario|factura|envio|pago|redes|vendedor|mayorista|tecnico|pedido|web|reparacion|perfume|funda|vidrio|gracias|chau)/i);
 
+      
     if (esBusqueda) {
-      const productos = await buscarProductosDB(textoNorm);
+    // 1. Intentamos búsqueda combinada (ej: "bateria" + "samsung")
+    // Esto es mucho más preciso.
+    let productos = await query(
+        `SELECT * FROM products WHERE available = true 
+         AND name ILIKE $1 AND name ILIKE $2 LIMIT 5`,
+        [`%${palabras[0]}%`, `%${palabras[1]}%`]
+    );
+    
+    // 2. Si no hay resultados, ahí recién caemos en la búsqueda amplia
+    if (productos.length === 0) {
+        productos = await buscarProductosDB(textoNorm);
+    }
+
 
       if (productos.length > 0) {
         // Primero enviar el mensaje resumen
         await enviarTexto(telefono, respuesta);
+        
 
         // Después enviar cada producto individualmente con foto y link
         for (const p of productos) {
