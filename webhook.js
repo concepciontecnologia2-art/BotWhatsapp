@@ -193,35 +193,40 @@ router.post("/", async (req, res) => {
       const productos = await buscarProductosDB(textoNorm);
 
       if (productos.length > 0) {
+        // 1. Enviamos el mensaje de texto de respuesta primero
         await enviarTexto(telefono, respuesta);
         
-       // Después enviar cada producto individualmente con foto y link
-for (const p of productos) {
-    // 1. Aseguramos que el ID exista (usamos 0 si no lo encuentra)
-    const productId = p.id || "0"; 
-    const link = `https://concepciontecnologia.vercel.app/mayorista/producto/${productId}`;
-    
-    const precioLimpio = typeof p.price_wholesale === 'string' 
-        ? p.price_wholesale.replace(/[^0-9.-]+/g, "") 
-        : p.price_wholesale;
+        // 2. Iteramos cada producto
+        for (const p of productos) {
+          const link = `https://concepciontecnologia.vercel.app/mayorista/producto/${p.id}`;
+          
+          // Limpieza de precio
+          const precioLimpio = typeof p.price_wholesale === 'string' 
+            ? p.price_wholesale.replace(/[^0-9.-]+/g, "") 
+            : p.price_wholesale;
+          const precio = Number(precioLimpio || 0);
 
-    const precio = Number(precioLimpio || 0);
-    
-    // 2. Armamos el caption SIEMPRE con el link, aunque sea 0
-    const caption = `${stockEmoji(p.stock_quantity)} *${p.name}*\n💰 Precio: ${fmt(precio)}\n📦 Stock: ${p.stock_quantity} unidades\n🔗 ${link}`;
+          // Construimos el caption CON el link
+          const caption = `${stockEmoji(p.stock_quantity)} *${p.name}*\n💰 Precio: ${fmt(precio)}\n📦 Stock: ${p.stock_quantity} unidades\n🔗 ${link}`;
 
-    if (p.image_url) {
-        await enviarImagen(telefono, p.image_url, caption);
-    } else {
-        await enviarTexto(telefono, caption);
-    }
+          // Enviar imagen o texto según corresponda
+          if (p.image_url) {
+            await enviarImagen(telefono, p.image_url, caption);
+          } else {
+            await enviarTexto(telefono, caption);
+          }
+          
+          // Pequeña pausa
+          await new Promise(r => setTimeout(r, 500));
+        }
 
-    await new Promise(r => setTimeout(r, 500));
-}
+        // 3. MENSAJE FINAL (Solo después de mostrar los productos)
         await enviarTexto(telefono, `Por favor, para realizar la compra ingresa en el link correspondiente al producto que elijas. Si deseas comprarlo por mayorista, ahi mismo veras un boton directo a compra mayorista. Espero haberte ayudado.`);
+        
         return res.sendStatus(200);
       }
     }
+    
 
     await enviarTexto(telefono, respuesta);
     console.log(`✅ Respuesta enviada a ${telefono}`);
