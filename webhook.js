@@ -235,26 +235,24 @@ router.post("/", async (req, res) => {
   }
 });
 
-// Usamos un Map para guardar los temporizadores por ID de usuario
+
 const timers = new Map();
 
-// Ajustada para usar 'enviarTexto' y el parámetro 'telefono' correctamente
-const handleMessage = (telefono) => {
-    // 1. Si ya existe un timer, lo reiniciamos
+function handleMessage(telefono) {
+    // Si ya existe, lo eliminamos
     if (timers.has(telefono)) {
+        console.log(`⏱️ Reiniciando timer para ${telefono}`);
         clearTimeout(timers.get(telefono));
     }
 
-    // 2. Creamos el nuevo timer de 4 minutos
-    const timer = setTimeout(async () => {
-        // Esta función se ejecuta si pasan 4 min sin que el usuario escriba
-        await sendWhatsAppMessage(userId, "🙏 *¡Muchas gracias por comunicarte con nosotros!\n\n 🫡 Si necesitás algo más recordá que estamos a tu disposición!\n\n👋😁 ¡Que tengas un excelente día!");
-        
-        // Limpiamos el mapa después de enviar
-        timers.delete(userId);
-    }, 2 * 60 * 1000);
+    console.log(`⏱️ Timer iniciado para ${telefono} (4 minutos)`);
 
-    // 3. Guardamos el timer en el mapa
+    const timer = setTimeout(async () => {
+        console.log(`⏱️ Enviando despedida a ${telefono}`);
+        await enviarTexto(telefono, "Parece que ya no estás por ahí. ¡Cualquier otra consulta, escribime nuevamente! Saludos de Concepción Tecnología.");
+        timers.delete(telefono);
+    }, 4 * 60 * 1000); // 4 minutos
+
     timers.set(telefono, timer);
 }
 module.exports = router;
