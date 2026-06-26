@@ -198,8 +198,8 @@ router.post("/", async (req, res) => {
 
         // Después enviar cada producto individualmente con foto y link
         for (const p of productos) {
-          const link = `https://concepciontecnologia.vercel.app/producto/${p.id}`;
-          const caption = `${stockEmoji(p.stock_quantity)} *${p.name}*\n💰 Precio: ${fmt(Number(p.price_retail))}\n📦 Stock: ${p.stock_quantity} unidades\n🔗 ${link}`;
+          const link = `https://concepciontecnologia.vercel.app/mayorista/producto/${p.id}`;
+          const caption = `${stockEmoji(p.stock_quantity)} *${p.name}*\n💰 Precio: ${fmt(Number(p.price_wholesale))}\n📦 Stock: ${p.stock_quantity} unidades\n🔗 ${link}`;
 
           if (p.image_url) {
             await enviarImagen(telefono, p.image_url, caption);
