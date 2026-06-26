@@ -172,7 +172,11 @@ const procesarMensaje = async (mensaje, tipo = "text") => {
   if (texto === "2") {
     const abierto = estaAbierto();
     if (abierto) {
-      return `✅ *¡Estamos abiertos ahora!*\n\n📍 Calle Independencia 450, Concepción, Tucumán\n🕐 *L-V:* 9-12 y 16-20hs · *Sáb:* 9-15hs\n🗺️ https://maps.google.com/?q=Independencia+450+Concepcion+Tucuman`;
+      return `☝️😃NUESTROS HORARIOS DE ATENCIÓN\n\n 
+🕒HORARIO LUN A VIER DE 9HS A 12HS Y DE 16HS A 20HS\n\n 
+SÁBADO DE 9HS A 15HS\n\n
+🏪Calle Independencia 450\n\n 
+📍 UBICACIÓN\n🗺️ https://maps.google.com/?q=Independencia+450+Concepcion+Tucuman`;
     } else {
       return `😮 *OH NO, ESTAMOS CERRADOS*, pero te atenderemos lo antes posible.\n\n🕒 Lunes a Viernes de 9hs a 12hs y de 16hs a 20hs\n🕒 Sábado de 9hs a 15hs\n🏪 Calle Independencia 450`;
     }
