@@ -13,8 +13,8 @@ const expandirTermino = (texto) => {
     .replace(/\bbaterias?\b/g, "bateria")
     .replace(/\bpantallas?\b/g, "pantalla")
     .replace(/\bfundas?\b/g, "funda")
-    .replace(/\bcarcasas?\b/g, "funda") // Agregá esto
-    .replace(/\bprotectores?\b/g, "funda") // Agregá esto
+    .replace(/\bcarcasas?\b/g, "funda")
+    .replace(/\bprotectores?\b/g, "funda")
     .replace(/\bcargadores?\b/g, "cargador")
     .replace(/\bcables?\b/g, "cable")
     .replace(/\blinternas?\b/g, "linterna")
@@ -102,17 +102,13 @@ const enviarImagen = async (telefono, imageUrl, caption) => {
 const buscarProductosDB = async (termino) => {
   const terminoExpandido = expandirTermino(termino);
   
-  // Usamos el término completo para una búsqueda que incluya todas las palabras
-  // Esto obliga a que el nombre del producto contenga todo lo que el usuario escribió
-  // (Ej: "modulo", "motorola", "g20")
-  
   const resultados = await query(
     `SELECT p.id, p.name, p.price_wholesale, p.stock_quantity, p.image_url
      FROM products p
      WHERE p.available = true 
      AND p.name ILIKE $1 
      ORDER BY p.name ASC LIMIT 5`,
-    [`%${terminoExpandido}%`] // Esto busca que el producto tenga todas las palabras del término
+    [`%${terminoExpandido}%`]
   ).catch((err) => {
     console.error("Error en DB:", err);
     return [];
@@ -120,6 +116,7 @@ const buscarProductosDB = async (termino) => {
 
   return resultados;
 };
+
 // Verificación webhook
 router.get("/", (req, res) => {
   const mode = req.query["hub.mode"];
@@ -143,30 +140,23 @@ router.post("/", async (req, res) => {
     if (!messages || messages.length === 0) return res.sendStatus(200);
 
     const mensaje = messages[0];
-    
-    // Declaración explícita antes de usarla
     const telefono = mensaje.from;
     const tipo = mensaje.type;
 
-    // Ahora la variable 'telefono' ya existe y tiene valor, podemos llamar a la función
     handleMessage(telefono);
     
     console.log(`📩 Mensaje de ${telefono} (tipo: ${tipo})`);
 
-    
-    // IMAGEN → pedir que escriba
     if (["image", "video", "sticker"].includes(tipo)) {
       await enviarTexto(telefono, `📝 Por favor escribí el nombre del producto que buscás y te ayudamos enseguida. 😊`);
       return res.sendStatus(200);
     }
 
-    // AUDIO → rechazar
     if (["audio", "voice"].includes(tipo)) {
       await enviarTexto(telefono, `⚠️ Este número no recibe audios ni llamadas. Por favor escribinos tu consulta por texto. ¡Gracias! 😊`);
       return res.sendStatus(200);
     }
 
-    // DOCUMENTO → ignorar
     if (tipo === "document") return res.sendStatus(200);
 
     const texto = mensaje.text?.body;
@@ -174,65 +164,50 @@ router.post("/", async (req, res) => {
 
     console.log(`💬 Texto: ${texto}`);
 
-    // Procesar respuesta principal
     const respuesta = await procesarMensaje(texto, tipo);
     if (!respuesta) return res.sendStatus(200);
 
-    // Detectar si es una búsqueda de producto
-   const textoNorm = texto.toLowerCase()
-  .normalize("NFD")
-  .replace(/[\u0300-\u036f]/g, "")
-  .replace(/(precio|cuanto sale|cuanto cuesta|stock|tienen|hay|busco|quiero|tenes|hola|buenas|consulta)/g, "")
-  .replace(/\s+/g, " ").trim();
+    const textoNorm = texto.toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/(precio|cuanto sale|cuanto cuesta|stock|tienen|hay|busco|quiero|tenes|hola|buenas|consulta)/g, "")
+      .replace(/\s+/g, " ").trim();
 
-// AQUI DEFINIMOS palabras, para que esté disponible en este scope
-const palabras = textoNorm.split(" ").filter(p => p.length > 1);
+    const palabras = textoNorm.split(" ").filter(p => p.length > 1);
 
-const esBusqueda = textoNorm.length > 2 &&
-  !texto.match(/^[123]$/) &&
-  !texto.match(/(horario|factura|envio|pago|redes|vendedor|mayorista|tecnico|pedido|web|reparacion|perfume|funda|vidrio|gracias|chau)/i);
+    const esBusqueda = textoNorm.length > 2 &&
+      !texto.match(/^[123]$/) &&
+      !texto.match(/(horario|factura|envio|pago|redes|vendedor|mayorista|tecnico|pedido|web|reparacion|perfume|funda|vidrio|gracias|chau)/i);
 
-if (esBusqueda) {
-  // Ahora 'palabras' ya está definido aquí y no dará error
-  const productos = await buscarProductosDB(textoNorm);
-
+    if (esBusqueda) {
+      const productos = await buscarProductosDB(textoNorm);
 
       if (productos.length > 0) {
-        // Primero enviar el mensaje resumen
         await enviarTexto(telefono, respuesta);
         
-
-        // Después enviar cada producto individualmente con foto y link
         for (const p of productos) {
           const link = `https://concepciontecnologia.vercel.app/mayorista/producto/${p.id}`;
-          // En lugar de: Number(p.price_wholesale)
-// Usá esta versión que limpia el string:
-const precioLimpio = typeof p.price_wholesale === 'string' 
-    ? p.price_wholesale.replace(/[^0-9.-]+/g, "") 
-    : p.price_wholesale;
+          
+          const precioLimpio = typeof p.price_wholesale === 'string' 
+            ? p.price_wholesale.replace(/[^0-9.-]+/g, "") 
+            : p.price_wholesale;
 
-const precio = Number(precioLimpio || 0);
-
-const caption = `${stockEmoji(p.stock_quantity)} *${p.name}*\n💰 Precio: ${fmt(precio)}\n📦 Stock: ${p.stock_quantity} unidades\n🔗 ${link}`;
+          const precio = Number(precioLimpio || 0);
+          const caption = `${stockEmoji(p.stock_quantity)} *${p.name}*\n💰 Precio: ${fmt(precio)}\n📦 Stock: ${p.stock_quantity} unidades\n🔗 ${link}`;
 
           if (p.image_url) {
             await enviarImagen(telefono, p.image_url, caption);
           } else {
             await enviarTexto(telefono, caption);
           }
-
-          // Pequeña pausa entre mensajes para no saturar
           await new Promise(r => setTimeout(r, 500));
         }
 
-        // Mensaje final preguntando mayor o menor
         await enviarTexto(telefono, `Por favor, para realizar la compra ingresa en el link correspondiente al producto que elijas. Si deseas comprarlo por mayorista, ahi mismo veras un boton directo a compra mayorista. Espero haberte ayudado.`);
-
         return res.sendStatus(200);
       }
     }
 
-    // Respuesta normal
     await enviarTexto(telefono, respuesta);
     console.log(`✅ Respuesta enviada a ${telefono}`);
     res.sendStatus(200);
@@ -243,31 +218,27 @@ const caption = `${stockEmoji(p.stock_quantity)} *${p.name}*\n💰 Precio: ${fmt
   }
 });
 
-
 const timers = new Map();
 
 function handleMessage(telefono) {
-    // Si ya existe, lo eliminamos
     if (timers.has(telefono)) {
         console.log(`⏱️ Reiniciando timer para ${telefono}`);
         clearTimeout(timers.get(telefono));
-        timers.delete(telefono); // Borramos la referencia vieja
+        timers.delete(telefono);
     }
 
-    console.log(`⏱️ Timer iniciado para ${telefono} (4 minutos)`);
+    console.log(`⏱️ Timer iniciado para ${telefono} (5 minutos)`);
 
-   // 2. Creamos el nuevo timer de 2 minutos
-const timer = setTimeout(async () => {
-    console.log(`⏱️ Enviando despedida a ${telefono}`);
-    
-    const mensajeDespedida = "🙂 Parece que ya no estás aquí.\n\n🙏 ¡Muchas gracias por comunicarte con nosotros!\n\n🫡 Si necesitás algo más recordá que estamos a tu disposición!\n\n👋😁 ¡Que tengas un excelente día!";
-    
-    await enviarTexto(telefono, mensajeDespedida);
-    
-    // Limpiamos el mapa después de enviar
-    timers.delete(telefono);
-}, 5 * 60 * 1000); // 2 minutos
+    const timer = setTimeout(async () => {
+        console.log(`⏱️ Enviando despedida a ${telefono}`);
+        
+        const mensajeDespedida = "🙂 Parece que ya no estás aquí.\n\n🙏 ¡Muchas gracias por comunicarte con nosotros!\n\n🫡 Si necesitás algo más recordá que estamos a tu disposición!\n\n👋😁 ¡Que tengas un excelente día!";
+        
+        await enviarTexto(telefono, mensajeDespedida);
+        timers.delete(telefono);
+    }, 5 * 60 * 1000); 
 
     timers.set(telefono, timer);
 }
+
 module.exports = router;
