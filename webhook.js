@@ -205,7 +205,15 @@ router.post("/", async (req, res) => {
         // Después enviar cada producto individualmente con foto y link
         for (const p of productos) {
           const link = `https://concepciontecnologia.vercel.app/mayorista/producto/${p.id}`;
-          const caption = `${stockEmoji(p.stock_quantity)} *${p.name}*\n💰 Precio: ${fmt(Number(p.price_wholesale))}\n📦 Stock: ${p.stock_quantity} unidades\n🔗 ${link}`;
+          // En lugar de: Number(p.price_wholesale)
+// Usá esta versión que limpia el string:
+const precioLimpio = typeof p.price_wholesale === 'string' 
+    ? p.price_wholesale.replace(/[^0-9.-]+/g, "") 
+    : p.price_wholesale;
+
+const precio = Number(precioLimpio || 0);
+
+const caption = `${stockEmoji(p.stock_quantity)} *${p.name}*\n💰 Precio: ${fmt(precio)}\n📦 Stock: ${p.stock_quantity} unidades\n🔗 ${link}`;
 
           if (p.image_url) {
             await enviarImagen(telefono, p.image_url, caption);
