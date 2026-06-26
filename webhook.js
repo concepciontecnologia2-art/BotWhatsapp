@@ -147,15 +147,19 @@ router.post("/", async (req, res) => {
 
     const messages = body.entry?.[0]?.changes?.[0]?.value?.messages;
     if (!messages || messages.length === 0) return res.sendStatus(200);
-     
-    handleMessage(telefono);
 
     const mensaje = messages[0];
+    
+    // Declaración explícita antes de usarla
     const telefono = mensaje.from;
     const tipo = mensaje.type;
 
+    // Ahora la variable 'telefono' ya existe y tiene valor, podemos llamar a la función
+    handleMessage(telefono);
+    
     console.log(`📩 Mensaje de ${telefono} (tipo: ${tipo})`);
 
+    
     // IMAGEN → pedir que escriba
     if (["image", "video", "sticker"].includes(tipo)) {
       await enviarTexto(telefono, `📝 Por favor escribí el nombre del producto que buscás y te ayudamos enseguida. 😊`);
