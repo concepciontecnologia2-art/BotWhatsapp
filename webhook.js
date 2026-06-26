@@ -243,6 +243,7 @@ function handleMessage(telefono) {
     if (timers.has(telefono)) {
         console.log(`⏱️ Reiniciando timer para ${telefono}`);
         clearTimeout(timers.get(telefono));
+        timers.delete(telefono); // Borramos la referencia vieja
     }
 
     console.log(`⏱️ Timer iniciado para ${telefono} (4 minutos)`);
