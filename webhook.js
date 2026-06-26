@@ -249,9 +249,9 @@ function handleMessage(telefono) {
 
     const timer = setTimeout(async () => {
         console.log(`⏱️ Enviando despedida a ${telefono}`);
-        await enviarTexto(telefono, "Parece que ya no estás por ahí. ¡Cualquier otra consulta, escribime nuevamente! Saludos de Concepción Tecnología.");
+        await enviarTexto(telefono, "🙏 *¡Muchas gracias por comunicarte con nosotros!*\n\n🫡 Si necesitás algo más recordá que estamos a tu disposición!\n\n👋😁 ¡Que tengas un excelente día!");
         timers.delete(telefono);
-    }, 4 * 60 * 1000); // 4 minutos
+    }, 2 * 60 * 1000); // 4 minutos
 
     timers.set(telefono, timer);
 }
