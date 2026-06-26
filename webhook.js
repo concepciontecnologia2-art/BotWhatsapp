@@ -247,11 +247,17 @@ function handleMessage(telefono) {
 
     console.log(`⏱️ Timer iniciado para ${telefono} (4 minutos)`);
 
-    const timer = setTimeout(async () => {
-        console.log(`⏱️ Enviando despedida a ${telefono}`);
-        await enviarTexto(telefono, "🙏 *¡Muchas gracias por comunicarte con nosotros!*\n\n🫡 Si necesitás algo más recordá que estamos a tu disposición!\n\n👋😁 ¡Que tengas un excelente día!");
-        timers.delete(telefono);
-    }, 2 * 60 * 1000); // 4 minutos
+   // 2. Creamos el nuevo timer de 2 minutos
+const timer = setTimeout(async () => {
+    console.log(`⏱️ Enviando despedida a ${telefono}`);
+    
+    const mensajeDespedida = "🙂 Parece que ya no estás aquí.\n\n🙏 ¡Muchas gracias por comunicarte con nosotros!\n\n🫡 Si necesitás algo más recordá que estamos a tu disposición!\n\n👋😁 ¡Que tengas un excelente día!";
+    
+    await enviarTexto(telefono, mensajeDespedida);
+    
+    // Limpiamos el mapa después de enviar
+    timers.delete(telefono);
+}, 2 * 60 * 1000); // 2 minutos
 
     timers.set(telefono, timer);
 }
