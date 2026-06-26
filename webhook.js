@@ -142,6 +142,7 @@ router.get("/", (req, res) => {
   }
 });
 
+const mensajesProcesados = new Set();
 // Recibir mensajes
 router.post("/", async (req, res) => {
   try {
@@ -154,6 +155,15 @@ router.post("/", async (req, res) => {
     const mensaje = messages[0];
     const telefono = mensaje.from;
     const tipo = mensaje.type;
+
+    // --- ESCUDO ANTI-BUCLE ---
+        const messageId = mensaje.id;
+        if (mensajesProcesados.has(messageId)) {
+            return res.sendStatus(200); // Ya lo procesamos, ignorar
+        }
+        mensajesProcesados.add(messageId);
+
+        setTimeout(() => mensajesProcesados.delete(messageId), 300000);
 
     // Si estamos enviando la despedida, ignorar el mensaje entrante
     if (enviandoDespedida.has(telefono)) {
