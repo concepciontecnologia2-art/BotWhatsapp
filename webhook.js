@@ -186,30 +186,22 @@ router.post("/", async (req, res) => {
     if (!respuesta) return res.sendStatus(200);
 
     // Detectar si es una búsqueda de producto
-    const textoNorm = texto.toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/(precio|cuanto sale|cuanto cuesta|stock|tienen|hay|busco|quiero|tenes|hola|buenas|consulta)/g, "")
-      .replace(/\s+/g, " ").trim();
+   const textoNorm = texto.toLowerCase()
+  .normalize("NFD")
+  .replace(/[\u0300-\u036f]/g, "")
+  .replace(/(precio|cuanto sale|cuanto cuesta|stock|tienen|hay|busco|quiero|tenes|hola|buenas|consulta)/g, "")
+  .replace(/\s+/g, " ").trim();
 
-    const esBusqueda = textoNorm.length > 2 &&
-      !texto.match(/^[123]$/) &&
-      !texto.match(/(horario|factura|envio|pago|redes|vendedor|mayorista|tecnico|pedido|web|reparacion|perfume|funda|vidrio|gracias|chau)/i);
+// AQUI DEFINIMOS palabras, para que esté disponible en este scope
+const palabras = textoNorm.split(" ").filter(p => p.length > 1);
 
-      
-    if (esBusqueda) {
-    // 1. Intentamos búsqueda combinada (ej: "bateria" + "samsung")
-    // Esto es mucho más preciso.
-    let productos = await query(
-        `SELECT * FROM products WHERE available = true 
-         AND name ILIKE $1 AND name ILIKE $2 LIMIT 5`,
-        [`%${palabras[0]}%`, `%${palabras[1]}%`]
-    );
-    
-    // 2. Si no hay resultados, ahí recién caemos en la búsqueda amplia
-    if (productos.length === 0) {
-        productos = await buscarProductosDB(textoNorm);
-    }
+const esBusqueda = textoNorm.length > 2 &&
+  !texto.match(/^[123]$/) &&
+  !texto.match(/(horario|factura|envio|pago|redes|vendedor|mayorista|tecnico|pedido|web|reparacion|perfume|funda|vidrio|gracias|chau)/i);
+
+if (esBusqueda) {
+  // Ahora 'palabras' ya está definido aquí y no dará error
+  const productos = await buscarProductosDB(textoNorm);
 
 
       if (productos.length > 0) {
