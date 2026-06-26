@@ -101,15 +101,25 @@ const enviarImagen = async (telefono, imageUrl, caption) => {
 
 const buscarProductosDB = async (termino) => {
   const terminoExpandido = expandirTermino(termino);
+  // Dividimos la búsqueda en palabras individuales
+  const palabras = terminoExpandido.split(" ").filter(p => p.length > 0);
   
-  const resultados = await query(
-    `SELECT p.id, p.name, p.price_wholesale, p.stock_quantity, p.image_url
-     FROM products p
-     WHERE p.available = true 
-     AND p.name ILIKE $1 
-     ORDER BY p.name ASC LIMIT 5`,
-    [`%${terminoExpandido}%`]
-  ).catch((err) => {
+  // Construimos una condición que obligue a que el nombre contenga TODAS las palabras
+  // Ejemplo: WHERE name ILIKE '%modulo%' AND name ILIKE '%motorola%' AND name ILIKE '%g20%'
+  const condiciones = palabras.map(() => "p.name ILIKE ?").join(" AND ");
+  const valores = palabras.map(p => `%${p}%`);
+
+  const sql = `
+    SELECT p.id, p.name, p.price_wholesale, p.stock_quantity, p.image_url
+    FROM products p
+    WHERE p.available = true 
+    AND (${condiciones})
+    ORDER BY p.name ASC 
+    LIMIT 5`;
+
+  // IMPORTANTE: Asegurate de usar tu método de ejecución de query (ya sea con ? o $1)
+  // Si tu base usa '?', el código de arriba está listo.
+  const resultados = await query(sql, valores).catch((err) => {
     console.error("Error en DB:", err);
     return [];
   });
