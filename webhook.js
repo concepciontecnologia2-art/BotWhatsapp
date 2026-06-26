@@ -131,7 +131,7 @@ const buscarProductosDB = async (termino) => {
     
     resultados = await query(sqlOr, valores).catch(() => []);
   }
-  
+
   return resultados;
 };
 
@@ -206,6 +206,7 @@ router.post("/", async (req, res) => {
         
         // 2. Iteramos cada producto
         for (const p of productos) {
+          console.log("Producto encontrado:", p.name, "ID:", p.id);
           const link = `https://concepciontecnologia.vercel.app/mayorista/producto/${p.id}`;
           
           // Limpieza de precio
