@@ -101,12 +101,12 @@ const enviarImagen = async (telefono, imageUrl, caption) => {
 
 const buscarProductosDB = async (termino) => {
   const terminoExpandido = expandirTermino(termino);
-  // Dividimos la búsqueda en palabras individuales
   const palabras = terminoExpandido.split(" ").filter(p => p.length > 0);
   
-  // Construimos una condición que obligue a que el nombre contenga TODAS las palabras
-  // Ejemplo: WHERE name ILIKE '%modulo%' AND name ILIKE '%motorola%' AND name ILIKE '%g20%'
-  const condiciones = palabras.map(() => "p.name ILIKE ?").join(" AND ");
+  // Creamos condiciones tipo ILIKE para cada palabra
+  // Usamos $1, $2, etc. porque tu DB es PostgreSQL
+  if (palabras.length === 0) return [];
+  const condiciones = palabras.map((_, index) => `p.name ILIKE $${index + 1}`).join(" AND ");
   const valores = palabras.map(p => `%${p}%`);
 
   const sql = `
@@ -117,8 +117,6 @@ const buscarProductosDB = async (termino) => {
     ORDER BY p.name ASC 
     LIMIT 5`;
 
-  // IMPORTANTE: Asegurate de usar tu método de ejecución de query (ya sea con ? o $1)
-  // Si tu base usa '?', el código de arriba está listo.
   const resultados = await query(sql, valores).catch((err) => {
     console.error("Error en DB:", err);
     return [];
