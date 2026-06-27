@@ -78,36 +78,50 @@ const enviarImagen = async (telefono, imageUrl, caption) => {
     console.error("Error enviarImagen:", JSON.stringify(err.response?.data, null, 2));
   }
 };
-
 const buscarProductosDB = async (termino) => {
   const terminoExpandido = expandirTermino(termino);
-  const palabras = terminoExpandido.split(" ").filter(p => p.length > 0);
+  const palabras = terminoExpandido.split(" ").filter(p => p.length > 1);
   if (palabras.length === 0) return [];
 
-  // Intento 1: AND (todas las palabras)
+  // Intento 1: AND estricto con todas las palabras
   const condicionesAnd = palabras.map((_, i) => `p.name ILIKE $${i + 1}`).join(" AND ");
   const valores = palabras.map(p => `%${p}%`);
   let resultados = await query(
     `SELECT p.id, p.name, p.price_wholesale, p.stock_quantity, p.image_url
      FROM products p WHERE p.available = true AND (${condicionesAnd})
-     ORDER BY p.name ASC LIMIT 5`,
+     ORDER BY p.name ASC LIMIT 8`,
     valores
   ).catch(() => []);
 
-  // Intento 2: OR (alguna palabra)
+  // Intento 2: Solo con palabras clave (sin las genéricas como "bateria", "modulo")
+  if (resultados.length === 0 && palabras.length > 1) {
+    const PALABRAS_GENERICAS = ["bateria", "modulo", "pantalla", "cable", "cargador", "funda", "tapa", "placa", "pin", "vidrio"];
+    const palabrasClave = palabras.filter(p => !PALABRAS_GENERICAS.includes(p));
+    if (palabrasClave.length > 0) {
+      const condClave = palabrasClave.map((_, i) => `p.name ILIKE $${i + 1}`).join(" AND ");
+      const valoresClave = palabrasClave.map(p => `%${p}%`);
+      resultados = await query(
+        `SELECT p.id, p.name, p.price_wholesale, p.stock_quantity, p.image_url
+         FROM products p WHERE p.available = true AND (${condClave})
+         ORDER BY p.name ASC LIMIT 8`,
+        valoresClave
+      ).catch(() => []);
+    }
+  }
+
+  // Intento 3: Solo la primera palabra significativa
   if (resultados.length === 0) {
-    const condicionesOr = palabras.map((_, i) => `p.name ILIKE $${i + 1}`).join(" OR ");
+    const primeraPalabra = palabras[0];
     resultados = await query(
       `SELECT p.id, p.name, p.price_wholesale, p.stock_quantity, p.image_url
-       FROM products p WHERE p.available = true AND (${condicionesOr})
-       ORDER BY p.name ASC LIMIT 5`,
-      valores
+       FROM products p WHERE p.available = true AND p.name ILIKE $1
+       ORDER BY p.name ASC LIMIT 8`,
+      [`%${primeraPalabra}%`]
     ).catch(() => []);
   }
 
   return resultados;
 };
-
 // Timer de despedida — separado por usuario
 const timers = new Map();
 const enviandoDespedida = new Set(); // evitar bucle
