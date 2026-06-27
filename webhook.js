@@ -84,28 +84,19 @@ const buscarProductosDB = async (termino) => {
   const palabras = terminoExpandido.split(" ").filter(p => p.length > 0);
   if (palabras.length === 0) return [];
 
-  // Intento 1: AND (todas las palabras)
-  const condicionesAnd = palabras.map((_, i) => `p.name ILIKE $${i + 1}`).join(" AND ");
+  // Buscamos solo con AND: el producto DEBE tener todas las palabras que escribió el usuario.
+  const condiciones = palabras.map((_, i) => `p.name ILIKE $${i + 1}`).join(" AND ");
   const valores = palabras.map(p => `%${p}%`);
-  let resultados = await query(
-    `SELECT p.id, p.name, p.price_wholesale, p.stock_quantity, p.image_url
-     FROM products p WHERE p.available = true AND (${condicionesAnd})
-     ORDER BY p.name ASC LIMIT 5`,
-    valores
-  ).catch(() => []);
 
-  // Intento 2: OR (alguna palabra)
-  if (resultados.length === 0) {
-    const condicionesOr = palabras.map((_, i) => `p.name ILIKE $${i + 1}`).join(" OR ");
-    resultados = await query(
-      `SELECT p.id, p.name, p.price_wholesale, p.stock_quantity, p.image_url
-       FROM products p WHERE p.available = true AND (${condicionesOr})
-       ORDER BY p.name ASC LIMIT 5`,
-      valores
-    ).catch(() => []);
-  }
+  const sql = `
+    SELECT p.id, p.name, p.price_wholesale, p.stock_quantity, p.image_url
+    FROM products p 
+    WHERE p.available = true 
+    AND (${condiciones})
+    ORDER BY p.name ASC 
+    LIMIT 5`;
 
-  return resultados;
+  return await query(sql, valores).catch(() => []);
 };
 
 // Timer de despedida — separado por usuario
