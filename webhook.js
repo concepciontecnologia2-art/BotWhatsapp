@@ -83,44 +83,17 @@ const buscarProductosDB = async (termino) => {
   const palabras = terminoExpandido.split(" ").filter(p => p.length > 1);
   if (palabras.length === 0) return [];
 
-  // Intento 1: AND estricto con todas las palabras
-  const condicionesAnd = palabras.map((_, i) => `p.name ILIKE $${i + 1}`).join(" AND ");
+  // Búsqueda única y precisa: debe contener TODAS las palabras ingresadas
+  const condiciones = palabras.map((_, i) => `p.name ILIKE $${i + 1}`).join(" AND ");
   const valores = palabras.map(p => `%${p}%`);
-  let resultados = await query(
-    `SELECT p.id, p.name, p.price_wholesale, p.stock_quantity, p.image_url
-     FROM products p WHERE p.available = true AND (${condicionesAnd})
-     ORDER BY p.name ASC LIMIT 8`,
-    valores
-  ).catch(() => []);
 
-  // Intento 2: Solo con palabras clave (sin las genéricas como "bateria", "modulo")
-  if (resultados.length === 0 && palabras.length > 1) {
-    const PALABRAS_GENERICAS = ["bateria", "modulo", "pantalla", "cable", "cargador", "funda", "tapa", "placa", "pin", "vidrio","textil"];
-    const palabrasClave = palabras.filter(p => !PALABRAS_GENERICAS.includes(p));
-    if (palabrasClave.length > 0) {
-      const condClave = palabrasClave.map((_, i) => `p.name ILIKE $${i + 1}`).join(" AND ");
-      const valoresClave = palabrasClave.map(p => `%${p}%`);
-      resultados = await query(
-        `SELECT p.id, p.name, p.price_wholesale, p.stock_quantity, p.image_url
-         FROM products p WHERE p.available = true AND (${condClave})
-         ORDER BY p.name ASC LIMIT 8`,
-        valoresClave
-      ).catch(() => []);
-    }
-  }
+  const sql = `SELECT p.id, p.name, p.price_wholesale, p.stock_quantity, p.image_url
+               FROM products p 
+               WHERE p.available = true 
+               AND (${condiciones})
+               ORDER BY p.name ASC LIMIT 5`;
 
-  // Intento 3: Solo la primera palabra significativa
-  if (resultados.length === 0) {
-    const primeraPalabra = palabras[0];
-    resultados = await query(
-      `SELECT p.id, p.name, p.price_wholesale, p.stock_quantity, p.image_url
-       FROM products p WHERE p.available = true AND p.name ILIKE $1
-       ORDER BY p.name ASC LIMIT 8`,
-      [`%${primeraPalabra}%`]
-    ).catch(() => []);
-  }
-
-  return resultados;
+  return await query(sql, valores).catch(() => []);
 };
 // Timer de despedida — separado por usuario
 const timers = new Map();
@@ -228,15 +201,12 @@ router.post("/", async (req, res) => {
       /^(horario|factura|envio|pago|redes|vendedor|mayorista|tecnico|pedido|web|reparacion|perfume|gracias|chau|hola|buenas|adios)/i.test(texto);
 
     const esBusqueda = textoNorm.length > 2 && !NO_ES_BUSQUEDA;
-
-    if (esBusqueda) {
+if (esBusqueda) {
       const productos = await buscarProductosDB(textoNorm);
 
       if (productos.length > 0) {
-        // Primero el mensaje resumen
         await enviarTexto(telefono, respuesta);
 
-        // Después cada producto con foto y link
         for (const p of productos) {
           const link = `https://concepciontecnologia.vercel.app/mayorista/producto/${p.id}`;
           const precio = Number(String(p.price_wholesale).replace(/[^0-9.-]+/g, "") || 0);
@@ -250,7 +220,11 @@ router.post("/", async (req, res) => {
           await new Promise(r => setTimeout(r, 500));
         }
 
-        await enviarTexto(telefono, `Para realizar la compra ingresá en el link del producto que elijas. Desde ahí podés comprarlo directamente por mayorista. 😊`);
+        await enviarTexto(telefono, `Para realizar la compra ingresá en el link del producto que elijas. 😊`);
+        return res.sendStatus(200);
+      } else {
+        // AQUÍ ESTÁ LA CLAVE: Si no encuentra nada, avisamos al usuario
+        await enviarTexto(telefono, `No encontré resultados exactos para "${textoNorm}". Por favor, intentá ser más específico o verificá el nombre del producto. 😊`);
         return res.sendStatus(200);
       }
     }
