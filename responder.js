@@ -172,17 +172,17 @@ const procesarMensaje = async (mensaje, tipo = "text") => {
   if (texto === "2") {
     const abierto = estaAbierto();
     if (abierto) {
-      return `☝️😃NUESTROS HORARIOS DE ATENCIÓN\n\n 
-🕒HORARIO LUN A VIER DE 9HS A 12HS Y DE 16HS A 20HS\n\n 
-SÁBADO DE 9HS A 15HS\n\n
-🏪Calle Independencia 450\n\n 
+      return `☝️😃NUESTROS HORARIOS DE ATENCIÓN\n 
+🕒HORARIO LUN A VIER DE 9HS A 12HS Y DE 16HS A 20HS\n 
+SÁBADO DE 9HS A 15HS\n
+🏪Calle Independencia 450\n 
 📍 UBICACIÓN\n🗺️ https://maps.google.com/?q=Independencia+450+Concepcion+Tucuman`;
     } else {
-      return `☝️😃NUESTROS HORARIOS DE ATENCIÓN\n\n  
-🕒HORARIO LUN A VIER DE 9HS A 12HS Y DE 16HS A 20HS\n\n  
-SÁBADO DE 9HS A 15HS\n\n 
-🏪Calle Independencia 450\n\n 
-📍 UBICACIÓN\n\n 🗺️ https://maps.google.com/?q=Independencia+450+Concepcion+Tucuman`;
+      return `☝️😃NUESTROS HORARIOS DE ATENCIÓN\n  
+🕒HORARIO LUN A VIER DE 9HS A 12HS Y DE 16HS A 20HS\n  
+SÁBADO DE 9HS A 15HS\n 
+🏪Calle Independencia 450\n 
+📍 UBICACIÓN\n 🗺️ https://maps.google.com/?q=Independencia+450+Concepcion+Tucuman`;
     }
   }
   if (texto === "3") {
