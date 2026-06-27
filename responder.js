@@ -59,34 +59,6 @@ const expandirTermino = (texto) => {
     .replace(/\bg14\b/g, "motorola g14");
 };
 
-const buscarProductos = async (termino) => {
-  const terminoExpandido = expandirTermino(normalizar(termino));
-  const palabras = terminoExpandido.split(" ").filter(p => p.length > 1);
-
-  let resultados = await query(
-    `SELECT p.id, p.name, p.price_retail, p.price_wholesale, p.stock_quantity, p.stock_level, p.available, p.image_url
-     FROM products p
-     WHERE p.name ILIKE $1 AND p.available = true
-     ORDER BY p.name ASC LIMIT 5`,
-    [`%${terminoExpandido}%`]
-  );
-
-  if (resultados.length === 0 && palabras.length > 1) {
-    for (const palabra of palabras) {
-      if (palabra.length < 2) continue;
-      const r = await query(
-        `SELECT p.id, p.name, p.price_retail, p.price_wholesale, p.stock_quantity, p.stock_level, p.available, p.image_url
-         FROM products p
-         WHERE p.name ILIKE $1 AND p.available = true
-         ORDER BY p.name ASC LIMIT 5`,
-        [`%${palabra}%`]
-      );
-      if (r.length > 0) { resultados = r; break; }
-    }
-  }
-
-  return resultados;
-};
 
 const estaAbierto = () => {
   const now = new Date();
