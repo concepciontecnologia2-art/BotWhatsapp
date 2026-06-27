@@ -256,10 +256,10 @@ if (texto.toLowerCase().includes("efectivo") || texto.toLowerCase().includes("de
 
     // Devolver resumen — el webhook envía foto+link por separado
     const resumen = productos.map(p =>
-      `${stockEmoji(p.stock_quantity)} *${p.name}*\n💰 Precio mayorista: ${fmt(Number(p.price_wholesale))}`
+`${stockEmoji(p.stock_quantity)} *${p.name}*\n💰 Precio mayorista: ${fmt(Number(p.price_wholesale))}\n🔗 https://concepciontecnologia.vercel.app/mayorista/producto/${p.id}`
     ).join("\n\n");
 
-    return `🔍 *Esto encontré en el sistema:*\n\n${resumen}\n\n🟢 En stock`;
+    return `🔍 *Esto encontré en el sistema:*\n\n${resumen}\ \n`;
   }
 
   // RESPUESTA POR DEFECTO
