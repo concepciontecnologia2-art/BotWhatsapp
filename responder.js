@@ -259,7 +259,7 @@ if (texto.toLowerCase().includes("efectivo") || texto.toLowerCase().includes("de
       `${stockEmoji(p.stock_quantity)} *${p.name}*\n💰 Precio mayorista: ${fmt(Number(p.price_wholesale))}`
     ).join("\n\n");
 
-    return null;
+    return `🔍 *Esto encontré en el sistema:*\n\n🟢 En stock`;
   }
 
   // RESPUESTA POR DEFECTO
