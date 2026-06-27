@@ -80,22 +80,34 @@ const enviarImagen = async (telefono, imageUrl, caption) => {
 };
 
 const buscarProductosDB = async (termino) => {
-  // 1. Usamos el término crudo que entra, sin tantas limpiezas agresivas
-  const palabras = termino.trim().split(" ").filter(p => p.length > 2);
+  const terminoExpandido = expandirTermino(termino);
+  const palabras = terminoExpandido.split(" ").filter(p => p.length > 0);
   if (palabras.length === 0) return [];
 
-  // 2. Usamos un ilike que busque el fragmento total
-  // Esto obliga a que el producto tenga al menos una coincidencia fuerte
-  const sql = `
-    SELECT id, name, price_wholesale, stock_quantity, image_url
-    FROM products 
-    WHERE available = true 
-    AND name ILIKE $1 
-    ORDER BY name ASC LIMIT 5`;
+  // Intento 1: AND (todas las palabras)
+  const condicionesAnd = palabras.map((_, i) => `p.name ILIKE $${i + 1}`).join(" AND ");
+  const valores = palabras.map(p => `%${p}%`);
+  let resultados = await query(
+    `SELECT p.id, p.name, p.price_wholesale, p.stock_quantity, p.image_url
+     FROM products p WHERE p.available = true AND (${condicionesAnd})
+     ORDER BY p.name ASC LIMIT 5`,
+    valores
+  ).catch(() => []);
 
-  // 3. Buscamos el término completo como una sola frase
-  return await query(sql, [`%${termino.trim()}%`]).catch(() => []);
+  // Intento 2: OR (alguna palabra)
+  if (resultados.length === 0) {
+    const condicionesOr = palabras.map((_, i) => `p.name ILIKE $${i + 1}`).join(" OR ");
+    resultados = await query(
+      `SELECT p.id, p.name, p.price_wholesale, p.stock_quantity, p.image_url
+       FROM products p WHERE p.available = true AND (${condicionesOr})
+       ORDER BY p.name ASC LIMIT 5`,
+      valores
+    ).catch(() => []);
+  }
+
+  return resultados;
 };
+
 // Timer de despedida — separado por usuario
 const timers = new Map();
 const enviandoDespedida = new Set(); // evitar bucle
