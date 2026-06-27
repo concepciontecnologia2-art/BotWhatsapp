@@ -222,7 +222,7 @@ if (esBusqueda) {
           }
           await new Promise(r => setTimeout(r, 500));
         }
-        await enviarTexto(telefono, `Para realizar la compra ingresá en el link del producto que elijas. Si tu producto no aparece, por favor escribi su nombre correctamente incluyendo MARCA y MODULO 😊`);
+        await enviarTexto(telefono, `Para realizar la compra ingresá en el link del producto que elijas. Si tu producto no aparece, por favor escribi su nombre correctamente incluyendo MARCA y MODELO 😊`);
 
         return res.sendStatus(200);
       } else {
