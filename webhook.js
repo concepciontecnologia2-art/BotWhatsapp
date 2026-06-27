@@ -95,7 +95,7 @@ const buscarProductosDB = async (termino) => {
 
   // Intento 2: Solo con palabras clave (sin las genéricas como "bateria", "modulo")
   if (resultados.length === 0 && palabras.length > 1) {
-    const PALABRAS_GENERICAS = ["bateria", "modulo", "pantalla", "cable", "cargador", "funda", "tapa", "placa", "pin", "vidrio"];
+    const PALABRAS_GENERICAS = ["bateria", "modulo", "pantalla", "cable", "cargador", "funda", "tapa", "placa", "pin", "vidrio","textil"];
     const palabrasClave = palabras.filter(p => !PALABRAS_GENERICAS.includes(p));
     if (palabrasClave.length > 0) {
       const condClave = palabrasClave.map((_, i) => `p.name ILIKE $${i + 1}`).join(" AND ");
