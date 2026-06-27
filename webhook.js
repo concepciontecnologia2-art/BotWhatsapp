@@ -208,11 +208,13 @@ if (esBusqueda) {
       const productos = await buscarProductosDB(textoNorm);
 
       if (productos.length > 0) {
-      // AQUÍ ESTÁ EL CAMBIO: Enviamos solo lo que encuentra la búsqueda estricta
-      // Sin listas genéricas de iPhones ni encabezados que confundan
-      for (const p of productos) {
-        const precio = Number(String(p.price_wholesale).replace(/[^0-9.-]+/g, ""));
-        const caption = `${stockEmoji(p.stock_quantity)} *${p.name}*\n💰 Precio: ${fmt(precio)}\n📦 Stock: ${p.stock_quantity} unidades\n🔗 https://concepciontecnologia.vercel.app/mayorista/producto/${p.id}`;
+        await enviarTexto(telefono, respuesta);
+
+        for (const p of productos) {
+          const link = `https://concepciontecnologia.vercel.app/mayorista/producto/${p.id}`;
+          const precio = Number(String(p.price_wholesale).replace(/[^0-9.-]+/g, "") || 0);
+          const caption = `${stockEmoji(p.stock_quantity)} *${p.name}*\n💰 Precio: ${fmt(precio)}\n📦 Stock: ${p.stock_quantity} unidades\n🔗 ${link}`;
+
           if (p.image_url) {
             await enviarImagen(telefono, p.image_url, caption);
           } else {
@@ -220,8 +222,8 @@ if (esBusqueda) {
           }
           await new Promise(r => setTimeout(r, 500));
         }
-
         await enviarTexto(telefono, `Para realizar la compra ingresá en el link del producto que elijas. Si tu producto no aparece, por favor escribi su nombre correctamente incluyendo MARCA y MODULO 😊`);
+
         return res.sendStatus(200);
       } else {
         // AQUÍ ESTÁ LA CLAVE: Si no encuentra nada, avisamos al usuario
