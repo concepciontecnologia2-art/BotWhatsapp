@@ -80,25 +80,22 @@ const enviarImagen = async (telefono, imageUrl, caption) => {
 };
 
 const buscarProductosDB = async (termino) => {
-  const terminoExpandido = expandirTermino(termino);
-  const palabras = terminoExpandido.split(" ").filter(p => p.length > 0);
+  // 1. Usamos el término crudo que entra, sin tantas limpiezas agresivas
+  const palabras = termino.trim().split(" ").filter(p => p.length > 2);
   if (palabras.length === 0) return [];
 
-  // Buscamos solo con AND: el producto DEBE tener todas las palabras que escribió el usuario.
-  const condiciones = palabras.map((_, i) => `p.name ILIKE $${i + 1}`).join(" AND ");
-  const valores = palabras.map(p => `%${p}%`);
-
+  // 2. Usamos un ilike que busque el fragmento total
+  // Esto obliga a que el producto tenga al menos una coincidencia fuerte
   const sql = `
-    SELECT p.id, p.name, p.price_wholesale, p.stock_quantity, p.image_url
-    FROM products p 
-    WHERE p.available = true 
-    AND (${condiciones})
-    ORDER BY p.name ASC 
-    LIMIT 5`;
+    SELECT id, name, price_wholesale, stock_quantity, image_url
+    FROM products 
+    WHERE available = true 
+    AND name ILIKE $1 
+    ORDER BY name ASC LIMIT 5`;
 
-  return await query(sql, valores).catch(() => []);
+  // 3. Buscamos el término completo como una sola frase
+  return await query(sql, [`%${termino.trim()}%`]).catch(() => []);
 };
-
 // Timer de despedida — separado por usuario
 const timers = new Map();
 const enviandoDespedida = new Set(); // evitar bucle
