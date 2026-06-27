@@ -85,7 +85,7 @@ const buscarProductos = async (termino) => {
     }
   }
 
-  return resultados;
+  return null;
 };
 
 const estaAbierto = () => {
