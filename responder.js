@@ -59,35 +59,31 @@ const expandirTermino = (texto) => {
     .replace(/\bg14\b/g, "motorola g14");
 };
 
-const buscarProductos = async (termino) => {
-  const terminoExpandido = expandirTermino(normalizar(termino));
-  const palabras = terminoExpandido.split(" ").filter(p => p.length > 1);
+const buscarProductosDB = async (termino) => {
+  // 1. Limpiamos: sacamos palabras inútiles y separamos por espacios
+  const palabras = termino.toLowerCase().trim().split(/\s+/).filter(p => p.length > 2);
+  if (palabras.length === 0) return [];
 
-  let resultados = await query(
-    `SELECT p.id, p.name, p.price_retail, p.price_wholesale, p.stock_quantity, p.stock_level, p.available, p.image_url
-     FROM products p
-     WHERE p.name ILIKE $1 AND p.available = true
-     ORDER BY p.name ASC LIMIT 5`,
-    [`%${terminoExpandido}%`]
-  );
+  // 2. CONSTRUCCIÓN ESTRICTA:
+  // Usamos un array de condiciones para forzar que el nombre contenga TODAS las palabras
+  // Esto evita que si escribís "samsung" te traiga un iPhone que por alguna razón 
+  // quedó mal categorizado o tiene un nombre parecido.
+  const condiciones = palabras.map((_, i) => `p.name ILIKE $${i + 1}`).join(" AND ");
+  const valores = palabras.map(p => `%${p}%`);
 
-  if (resultados.length === 0 && palabras.length > 1) {
-    for (const palabra of palabras) {
-      if (palabra.length < 2) continue;
-      const r = await query(
-        `SELECT p.id, p.name, p.price_retail, p.price_wholesale, p.stock_quantity, p.stock_level, p.available, p.image_url
-         FROM products p
-         WHERE p.name ILIKE $1 AND p.available = true
-         ORDER BY p.name ASC LIMIT 5`,
-        [`%${palabra}%`]
-      );
-      if (r.length > 0) { resultados = r; break; }
-    }
-  }
-
-  return resultados;
+  // 3. AGREGAMOS EL FILTRO POR CATEGORÍA O TIPO SI FUERA NECESARIO
+  // Pero por ahora, con el AND en el nombre debería ser suficiente para que NO traiga iPhones.
+  const sql = `SELECT id, name, price_wholesale, stock_quantity, image_url 
+               FROM products 
+               WHERE available = true 
+               AND (${condiciones}) 
+               ORDER BY 
+                 (CASE WHEN name ILIKE $1 THEN 1 ELSE 2 END), 
+                 name ASC 
+               LIMIT 5`;
+  
+  return await query(sql, valores).catch(() => []);
 };
-
 const estaAbierto = () => {
   const now = new Date();
   const hora = now.getHours();
