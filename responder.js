@@ -258,7 +258,7 @@ if (texto.toLowerCase().includes("efectivo") || texto.toLowerCase().includes("de
 `${stockEmoji(p.stock_quantity)} *${p.name}*\n💰 Precio mayorista: ${fmt(Number(p.price_wholesale))}\n🔗 https://concepciontecnologia.vercel.app/mayorista/producto/${p.id}`
     ).join("\n\n");
 
-    return `Antes te muestro algunas novedades que tal vez tambien te interesen.\n\n${resumen}\n\nLos productos que ingresaste apareceran abajo con su link y foto previa.\nGracias por confiar en nosotros.\nAtte. Concepcion Tecnologia\n\n🔍 *Esto encontré en el sistema:*`;
+    return `Te muestro los resultados de tu busqueda:\n\nLos productos que ingresaste apareceran con su link y foto previa.\n${resumen}\nGracias por confiar en nosotros.\nAtte. Concepcion Tecnologia\n\n🔍 *Esto encontré en el sistema:*`;
   }
 
   // RESPUESTA POR DEFECTO
