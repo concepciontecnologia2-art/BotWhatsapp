@@ -248,7 +248,7 @@ if (texto.toLowerCase().includes("efectivo") || texto.toLowerCase().includes("de
   const terminoBusqueda = expandirTermino(limpio);
 
   if (terminoBusqueda.length > 2) {
-    const productos = await buscarProductos(terminoBusqueda);
+    const productos = await buscarProductosDB(terminoBusqueda);
 
     if (productos.length === 0) {
       return `😕 No encontré ese producto en el sistema.\n\nPor favor indicanos la *marca y modelo exacto* (ej: _Samsung A15, Moto G54, iPhone 13_) y qué componente buscás.\n\nO escribí al local directamente:\n📞 https://wa.me/5493865630488`;
