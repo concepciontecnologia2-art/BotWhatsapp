@@ -101,6 +101,7 @@ const estaAbierto = () => {
 };
 
 const procesarMensaje = async (mensaje, tipo = "text") => {
+
   if (["image", "video", "sticker"].includes(tipo)) {
     return `📝 Por favor escribí el nombre del producto que buscás y te ayudamos enseguida. 😊`;
   }
@@ -256,13 +257,18 @@ if (texto.toLowerCase().includes("efectivo") || texto.toLowerCase().includes("de
     if (productos.length === 0) {
       return `😕 No encontré ese producto en el sistema.\n\nPor favor indicanos la *marca y modelo exacto* (ej: _Samsung A15, Moto G54, iPhone 13_) y qué componente buscás.\n\nO escribí al local directamente:\n📞 https://wa.me/5493865630488`;
     }
-    
-    // CORRECCIÓN: Si hay productos, devolvemos null para que el webhook 
-    // tome el control y los envíe con fotos y links (o el formato que definiste en webhook.js)
-    return null; 
+
+    // Devolver resumen — el webhook envía foto+link por separado
+    const resumen = productos.map(p =>
+`${stockEmoji(p.stock_quantity)} *${p.name}*\n💰 Precio mayorista: ${fmt(Number(p.price_wholesale))}\n🔗 https://concepciontecnologia.vercel.app/mayorista/producto/${p.id}`
+    ).join("\n\n");
+
+    return `Antes te muestro algunas novedades que tal vez tambien te interesen.\n\n${resumen}\n\nLos productos que ingresaste apareceran abajo con su link y foto previa.\nGracias por confiar en nosotros.\nAtte. Concepcion Tecnologia\n\n🔍 *Esto encontré en el sistema:*`;
   }
 
-  return null;
+  // RESPUESTA POR DEFECTO
+  return `No entendí bien tu consulta 😅\n\nTe comunicamos con el local para que te ayuden:\n📞 https://wa.me/5493865630488\n\nO escribí directamente lo que buscás. 😊`;
 };
+
 
 module.exports = { procesarMensaje };
