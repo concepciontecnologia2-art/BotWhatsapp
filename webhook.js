@@ -208,8 +208,7 @@ if (esBusqueda) {
       const productos = await buscarProductosDB(textoNorm);
 
       if (productos.length > 0) {
-        await enviarTexto(telefono, respuesta);
-
+        
         for (const p of productos) {
           const link = `https://concepciontecnologia.vercel.app/mayorista/producto/${p.id}`;
           const precio = Number(String(p.price_wholesale).replace(/[^0-9.-]+/g, "") || 0);
