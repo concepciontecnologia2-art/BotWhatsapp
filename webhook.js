@@ -79,28 +79,23 @@ const enviarImagen = async (telefono, imageUrl, caption) => {
   }
 };
 const buscarProductosDB = async (termino) => {
-  // 1. Limpiamos: sacamos palabras inútiles y separamos por espacios
-  const palabras = termino.toLowerCase().trim().split(/\s+/).filter(p => p.length > 2);
+  // Limpiamos los términos para búsqueda
+  const terminoExpandido = expandirTermino(termino);
+  const palabras = terminoExpandido.split(" ").filter(p => p.length > 2);
   if (palabras.length === 0) return [];
 
-  // 2. CONSTRUCCIÓN ESTRICTA:
-  // Usamos un array de condiciones para forzar que el nombre contenga TODAS las palabras
-  // Esto evita que si escribís "samsung" te traiga un iPhone que por alguna razón 
-  // quedó mal categorizado o tiene un nombre parecido.
+  // FORZAMOS AND: El producto DEBE tener todas las palabras ingresadas.
+  // Ejemplo: "Samsung" AND "A20". Si no tiene ambos, no lo trae.
   const condiciones = palabras.map((_, i) => `p.name ILIKE $${i + 1}`).join(" AND ");
   const valores = palabras.map(p => `%${p}%`);
 
-  // 3. AGREGAMOS EL FILTRO POR CATEGORÍA O TIPO SI FUERA NECESARIO
-  // Pero por ahora, con el AND en el nombre debería ser suficiente para que NO traiga iPhones.
-  const sql = `SELECT id, name, price_wholesale, stock_quantity, image_url 
-               FROM products 
-               WHERE available = true 
-               AND (${condiciones}) 
-               ORDER BY 
-                 (CASE WHEN name ILIKE $1 THEN 1 ELSE 2 END), 
-                 name ASC 
-               LIMIT 5`;
-  
+  const sql = `
+    SELECT p.id, p.name, p.price_wholesale, p.stock_quantity, p.image_url
+    FROM products p 
+    WHERE p.available = true 
+    AND (${condiciones})
+    ORDER BY p.name ASC LIMIT 5`;
+
   return await query(sql, valores).catch(() => []);
 };
 // Timer de despedida — separado por usuario

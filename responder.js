@@ -60,32 +60,27 @@ const expandirTermino = (texto) => {
 };
 
 const buscarProductos = async (termino) => {
+  // 1. Normalizamos y separamos palabras significativas
   const terminoExpandido = expandirTermino(normalizar(termino));
-  const palabras = terminoExpandido.split(" ").filter(p => p.length > 1);
+  const palabras = terminoExpandido.split(" ").filter(p => p.length > 2);
+  
+  if (palabras.length === 0) return [];
 
-  let resultados = await query(
-    `SELECT p.id, p.name, p.price_retail, p.price_wholesale, p.stock_quantity, p.stock_level, p.available, p.image_url
-     FROM products p
-     WHERE p.name ILIKE $1 AND p.available = true
-     ORDER BY p.name ASC LIMIT 5`,
-    [`%${terminoExpandido}%`]
-  );
+  // 2. CONSTRUIMOS UN FILTRO ESTRICTO (AND)
+  // Obligamos a que el nombre del producto contenga TODAS las palabras
+  // Ejemplo: "bateria" AND "samsung" AND "a20"
+  const condiciones = palabras.map((_, i) => `p.name ILIKE $${i + 1}`).join(" AND ");
+  const valores = palabras.map(p => `%${p}%`);
 
-  if (resultados.length === 0 && palabras.length > 1) {
-    for (const palabra of palabras) {
-      if (palabra.length < 2) continue;
-      const r = await query(
-        `SELECT p.id, p.name, p.price_retail, p.price_wholesale, p.stock_quantity, p.stock_level, p.available, p.image_url
-         FROM products p
-         WHERE p.name ILIKE $1 AND p.available = true
-         ORDER BY p.name ASC LIMIT 5`,
-        [`%${palabra}%`]
-      );
-      if (r.length > 0) { resultados = r; break; }
-    }
-  }
+  const sql = `
+    SELECT id, name, price_retail, price_wholesale, stock_quantity, stock_level, available, image_url
+    FROM products p
+    WHERE p.available = true 
+    AND (${condiciones})
+    ORDER BY p.name ASC 
+    LIMIT 5`;
 
-  return resultados;
+  return await query(sql, valores);
 };
 
 const estaAbierto = () => {
