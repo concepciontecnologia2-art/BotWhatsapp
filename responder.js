@@ -101,7 +101,6 @@ const estaAbierto = () => {
 };
 
 const procesarMensaje = async (mensaje, tipo = "text") => {
-
   if (["image", "video", "sticker"].includes(tipo)) {
     return `📝 Por favor escribí el nombre del producto que buscás y te ayudamos enseguida. 😊`;
   }
@@ -256,8 +255,14 @@ if (texto.toLowerCase().includes("efectivo") || texto.toLowerCase().includes("de
 
     if (productos.length === 0) {
       return `😕 No encontré ese producto en el sistema.\n\nPor favor indicanos la *marca y modelo exacto* (ej: _Samsung A15, Moto G54, iPhone 13_) y qué componente buscás.\n\nO escribí al local directamente:\n📞 https://wa.me/5493865630488`;
-    }}}
+    }
+    
+    // CORRECCIÓN: Si hay productos, devolvemos null para que el webhook 
+    // tome el control y los envíe con fotos y links (o el formato que definiste en webhook.js)
+    return null; 
+  }
 
-    return null;
+  return null;
+};
 
 module.exports = { procesarMensaje };
