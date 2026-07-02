@@ -213,33 +213,37 @@ router.post("/", async (req, res) => {
 
     const esBusqueda = textoNorm.length > 2 && !NO_ES_BUSQUEDA;
 if (esBusqueda) {
-  const productos = await buscarProductosDB(textoNorm);
+      const productos = await buscarProductosDB(textoNorm);
+      console.log("DEBUG: Productos listos para enviar:", productos.length);
 
-  if (productos.length > 0) {
-        
-
+      if (productos.length > 0) {
         for (const p of productos) {
-          const link = `https://concepciontecnologia.vercel.app/mayorista/producto/${p.id}`;
-          const precio = Number(String(p.price_wholesale).replace(/[^0-9.-]+/g, "") || 0);
-          const caption = `${stockEmoji(p.stock_quantity)} *${p.name}*\n💰 Precio: ${fmt(precio)}\n📦 Stock: ${p.stock_quantity} unidades\n🔗 ${link}`;
+          try {
+            const link = `https://concepciontecnologia.vercel.app/mayorista/producto/${p.id}`;
+            const precio = Number(String(p.price_wholesale).replace(/[^0-9.-]+/g, "") || 0);
+            const caption = `${stockEmoji(p.stock_quantity)} *${p.name}*\n💰 Precio: ${fmt(precio)}\n📦 Stock: ${p.stock_quantity} unidades\n🔗 ${link}`;
 
-          if (p.image_url) {
-            await enviarImagen(telefono, p.image_url, caption);
-          } else {
-            await enviarTexto(telefono, caption);
+            console.log(`DEBUG: Enviando producto ${p.id} - Imagen: ${p.image_url}`);
+
+            if (p.image_url && p.image_url.startsWith('http')) {
+              await enviarImagen(telefono, p.image_url, caption);
+            } else {
+              await enviarTexto(telefono, caption);
+            }
+            await new Promise(r => setTimeout(r, 800)); // Aumenté a 800ms por seguridad
+          } catch (errorEnvio) {
+            console.error(`DEBUG: Error enviando producto ${p.id}:`, errorEnvio.message);
           }
-          await new Promise(r => setTimeout(r, 500));
         }
-      await enviarTexto(telefono, `Para realizar la compra ingresá en el link del producto que elijas. \n https://concepciontecnologia.vercel.app/mayorista`);
-
+        
+        // Mensaje de cierre
+        await enviarTexto(telefono, `Para realizar la compra ingresá en el link del producto que elijas.\nhttps://concepciontecnologia.vercel.app/mayorista`);
         return res.sendStatus(200);
       } else {
-        // AQUÍ ESTÁ LA CLAVE: Si no encuentra nada, avisamos al usuario
-        await enviarTexto(telefono, `No encontré resultados exactos para "${textoNorm}". Por favor, intentá ser más específico o verificá el nombre del producto. 😊`);
+        await enviarTexto(telefono, `No encontré resultados exactos para "${textoNorm}".`);
         return res.sendStatus(200);
       }
     }
-
     await enviarTexto(telefono, respuesta);
     console.log(`✅ Respuesta enviada a ${telefono}`);
     res.sendStatus(200);
