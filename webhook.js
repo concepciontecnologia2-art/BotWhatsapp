@@ -81,26 +81,30 @@ const enviarImagen = async (telefono, imageUrl, caption) => {
 const buscarProductosDB = async (termino) => {
   const terminoExpandido = expandirTermino(termino);
   const palabras = terminoExpandido.split(" ").filter(p => p.length > 2);
+  
+  // LOG PARA DEPURACIÓN (Mira esto en el log de Render)
+  console.log("DEBUG: Buscando con:", palabras);
+  
   if (palabras.length === 0) return [];
 
   const condiciones = palabras.map((_, i) => `p.name ILIKE $${i + 1}`).join(" AND ");
   const valores = palabras.map(p => `%${p}%`);
 
-  // Agregamos un CASE en el ORDER BY para que "CELULAR" gane siempre
   const sql = `
     SELECT p.id, p.name, p.price_wholesale, p.stock_quantity, p.image_url
     FROM products p 
     WHERE p.available = true 
     AND (${condiciones})
-    ORDER BY 
-      (CASE 
-        WHEN p.name ILIKE '%CELULAR%' THEN 1 
-        ELSE 2 
-      END) ASC,
-      p.name ASC 
+    ORDER BY (CASE WHEN p.name ILIKE '%CELULAR%' THEN 1 ELSE 2 END) ASC, p.name ASC 
     LIMIT 5`;
 
-  return await query(sql, valores).catch(() => []);
+  const resultados = await query(sql, valores).catch((err) => {
+    console.error("DEBUG: Error en SQL:", err);
+    return [];
+  });
+
+  console.log("DEBUG: Resultados encontrados:", resultados.length);
+  return resultados;
 };
 // Timer de despedida — separado por usuario
 const timers = new Map();
