@@ -212,7 +212,7 @@ if (texto.toLowerCase().includes("efectivo") || texto.toLowerCase().includes("de
     if (texto.match(/(economico|barato)/)) {
       return `💰 *Perfumes Económicos:* Tenemos la línea *Maison Alhambra de 30ml* a solo *$20.000*.\n\n¿Querés más info? Escribí *vendedor* o visitá nuestra tienda. 😊`;
     }
-    return `🛍️ *Perfumería & Fragancias:*\n• Toda la línea de *Saphirus* y Sahumerios *Vishnu*.\n• Gran variedad de *Perfumería Árabe* original (*Lattafa*, *Maison Alhambra*, etc.).\n\nEn el local podés sentir las fragancias. 👃\n\n¿Querés más info? Escribí *vendedor* o visitá nuestra tienda. 😊`;
+    return `🛍️ *Perfumería & Fragancias:*\n• Toda la línea de *Saphirus* y Sahumerios *Vishnu*.\n• Gran variedad de *Perfumería Árabe* original (*Lattafa*, *Maison Alhambra*, etc.).\n\nEn el local podés sentir las fragancias. 👃\n\n¿Querés más info? Escribí *vendedor* o visitá nuestra tienda. https://concepciontecnologia.vercel.app/ 😊`;
   }
 
   // ENVÍOS
