@@ -92,7 +92,6 @@ const buscarProductosDB = async (termino) => {
   const sql = `
     SELECT id, name, price_wholesale, stock_quantity, image_url
     FROM products p 
-    WHERE p.stock_quantity >= 1
     WHERE p.name ILIKE $1 
     ORDER BY 
       (CASE 
