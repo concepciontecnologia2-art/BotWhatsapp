@@ -189,7 +189,7 @@ SÁBADO DE 9HS A 15HS\n
     return `🛠️ *Información sobre Servicio Técnico:*\n\nNo hacemos servicio técnico de colocación o reparación. 🛠️❌\n\nTrabajamos directo con los técnicos ya que *hay que probar los repuestos en el local*, de lo contrario salen sin garantía con la boleta.\n\n¿Puedo ayudarte con algo más? 😊`;
   }
 // Una vez que el cliente responde, verificás si pregunta por el pago:
-if (texto.toLowerCase().includes("efectivo") || texto.toLowerCase().includes("descuento")|| texto.toLowerCase().includes("haces decuento?")|| texto.toLowerCase().includes("aplicas descuento?")) {
+if (texto.toLowerCase().includes("efectivo") || texto.toLowerCase().includes("descuento")|| texto.toLowerCase().includes("haces descuento?")|| texto.toLowerCase().includes("aplicas descuento?")) {
     return `¡Excelente! Te comento, tenemos beneficios exclusivos para pago en efectivo:
     - 3% off en compras de $150.000.
     - 5% off en compras de $250.000.
