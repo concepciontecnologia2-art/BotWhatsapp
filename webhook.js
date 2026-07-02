@@ -83,32 +83,33 @@ const enviarImagen = async (telefono, imageUrl, caption) => {
     console.error("Error enviarImagen:", JSON.stringify(err.response?.data, null, 2));
   }
 };
-
 const buscarProductosDB = async (termino) => {
-  const terminoExpandido = expandirTermino(termino);
-  const palabras = terminoExpandido.split(" ").filter(p => p.length > 1);
-  if (palabras.length === 0) return [];
+  // 1. Tomamos el término tal cual llega, sin procesar palabras, para no romper el AND
+  const nombreBuscado = `%${termino.trim()}%`;
 
-  // Usamos un AND para asegurar precisión, pero un ORDER BY para jerarquía
-  const condicionesAnd = palabras.map((_, i) => `p.name ILIKE $${i + 1}`).join(" AND ");
-  const valores = palabras.map(p => `%${p}%`);
-
+  // 2. Buscamos ignorando si es AND o OR, solo buscamos coincidencias
+  // El ORDER BY pone los CELULARES arriba de todo siempre.
   const sql = `
     SELECT id, name, price_wholesale, stock_quantity, image_url
     FROM products p 
     WHERE p.stock_quantity >= 1
-    AND (${condicionesAnd})
+    WHERE p.name ILIKE $1 
     ORDER BY 
       (CASE 
-        WHEN name ILIKE 'CELULAR %' THEN 1  -- El Celular primero
-        WHEN name ILIKE 'PLACA %' THEN 2    -- Placa segundo
-        WHEN name ILIKE 'MODULO %' THEN 3   -- Módulo último
+        WHEN name ILIKE 'CELULAR %' THEN 1
+        WHEN name ILIKE 'MODULO %' THEN 2
+        WHEN name ILIKE 'PLACA %' THEN 3
         ELSE 4 
       END) ASC,
-      p.name ASC 
-    LIMIT 8`;
+      name ASC 
+    LIMIT 5`;
 
-  return await query(sql, valores).catch(() => []);
+  const resultados = await query(sql, [nombreBuscado]).catch((err) => {
+    console.error("Error BD:", err);
+    return [];
+  });
+
+  return resultados;
 };
 
  
