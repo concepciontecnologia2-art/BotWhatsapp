@@ -89,39 +89,26 @@ const buscarProductosDB = async (termino) => {
   const palabras = terminoExpandido.split(" ").filter(p => p.length > 1);
   if (palabras.length === 0) return [];
 
-  // --- FILTRO PRIORITARIO: BUSCAR EQUIPOS PRIMERO ---
-  // Si el usuario pone "celular" o si es un modelo claro, buscamos solo productos
-  // que tengan la palabra "CELULAR" en el nombre.
-  const esBusquedaCelular = termino.toLowerCase().includes("celular");
-  
-  if (esBusquedaCelular) {
-    const condicionesCel = palabras.filter(p => p.toLowerCase() !== 'celular')
-                                   .map((_, i) => `p.name ILIKE $${i + 1}`).join(" AND ");
-    const valoresCel = palabras.filter(p => p.toLowerCase() !== 'celular').map(p => `%${p}%`);
-    
-    // Forzamos que tenga la palabra CELULAR
-    const resultadosCel = await query(
-      `SELECT id, name, price_wholesale, stock_quantity, image_url 
-       FROM products p 
-       WHERE p.name ILIKE '%CELULAR%' AND (${condicionesCel || "1=1"}) 
-       ORDER BY p.name ASC LIMIT 5`,
-      valoresCel
-    ).catch(() => []);
-    
-    if (resultadosCel.length > 0) return resultadosCel;
-  }
-  // ----------------------------------------------------
-
-  // Si no es un celular o no encontró nada, sigue tu lógica normal...
+  // Usamos un AND para asegurar precisión, pero un ORDER BY para jerarquía
   const condicionesAnd = palabras.map((_, i) => `p.name ILIKE $${i + 1}`).join(" AND ");
   const valores = palabras.map(p => `%${p}%`);
-  
-  return await query(
-    `SELECT id, name, price_wholesale, stock_quantity, image_url
-     FROM products p WHERE p.stock_quantity >= 0 AND (${condicionesAnd})
-     ORDER BY p.name ASC LIMIT 8`,
-    valores
-  ).catch(() => []);
+
+  const sql = `
+    SELECT id, name, price_wholesale, stock_quantity, image_url
+    FROM products p 
+    WHERE p.stock_quantity >= 1
+    AND (${condicionesAnd})
+    ORDER BY 
+      (CASE 
+        WHEN name ILIKE 'CELULAR %' THEN 1  -- El Celular primero
+        WHEN name ILIKE 'PLACA %' THEN 2    -- Placa segundo
+        WHEN name ILIKE 'MODULO %' THEN 3   -- Módulo último
+        ELSE 4 
+      END) ASC,
+      p.name ASC 
+    LIMIT 8`;
+
+  return await query(sql, valores).catch(() => []);
 };
 
  
