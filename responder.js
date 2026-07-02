@@ -62,7 +62,7 @@ const expandirTermino = (texto) => {
 const buscarProductos = async (termino) => {
   // 1. Normalizamos y separamos palabras significativas
   const terminoExpandido = expandirTermino(normalizar(termino));
-  const palabras = terminoExpandido.split(" ").filter(p => p.length > 2);
+  const palabras = terminoExpandido.split(" ").filter(p => p.length > 1);
   
   if (palabras.length === 0) return [];
 
@@ -75,7 +75,7 @@ const buscarProductos = async (termino) => {
   const sql = `
     SELECT id, name, price_retail, price_wholesale, stock_quantity, stock_level, available, image_url
     FROM products p
-    WHERE p.available = true 
+     WHERE p.stock_quantity >= 1
     AND (${condiciones})
     ORDER BY p.name ASC 
     LIMIT 5`;
