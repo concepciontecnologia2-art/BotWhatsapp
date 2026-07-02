@@ -85,60 +85,46 @@ const enviarImagen = async (telefono, imageUrl, caption) => {
 };
 
 const buscarProductosDB = async (termino) => {
-  const terminoNormalizado = termino.toLowerCase();
+  const terminoExpandido = expandirTermino(termino);
+  const palabras = terminoExpandido.split(" ").filter(p => p.length > 1);
+  if (palabras.length === 0) return [];
+
+  // --- FILTRO PRIORITARIO: BUSCAR EQUIPOS PRIMERO ---
+  // Si el usuario pone "celular" o si es un modelo claro, buscamos solo productos
+  // que tengan la palabra "CELULAR" en el nombre.
+  const esBusquedaCelular = termino.toLowerCase().includes("celular");
   
-  // 1. FILTRO VIP: Si busca el A16, forzamos la búsqueda de ese producto exacto
-  if (terminoNormalizado.includes("a16")) {
-    const resVip = await query(
+  if (esBusquedaCelular) {
+    const condicionesCel = palabras.filter(p => p.toLowerCase() !== 'celular')
+                                   .map((_, i) => `p.name ILIKE $${i + 1}`).join(" AND ");
+    const valoresCel = palabras.filter(p => p.toLowerCase() !== 'celular').map(p => `%${p}%`);
+    
+    // Forzamos que tenga la palabra CELULAR
+    const resultadosCel = await query(
       `SELECT id, name, price_wholesale, stock_quantity, image_url 
-       FROM products 
-       WHERE name ILIKE '%A16%' AND name ILIKE '%CELULAR%' 
-       LIMIT 1`
+       FROM products p 
+       WHERE p.name ILIKE '%CELULAR%' AND (${condicionesCel || "1=1"}) 
+       ORDER BY p.name ASC LIMIT 5`,
+      valoresCel
     ).catch(() => []);
     
-    // Si lo encontró, lo devolvemos inmediatamente como prioridad 1
-    if (resVip.length > 0) return resVip;
+    if (resultadosCel.length > 0) return resultadosCel;
   }
+  // ----------------------------------------------------
 
-  // Intento 1: AND con todas las palabras
+  // Si no es un celular o no encontró nada, sigue tu lógica normal...
   const condicionesAnd = palabras.map((_, i) => `p.name ILIKE $${i + 1}`).join(" AND ");
   const valores = palabras.map(p => `%${p}%`);
-  let resultados = await query(
-    `SELECT p.id, p.name, p.price_wholesale, p.stock_quantity, p.image_url
+  
+  return await query(
+    `SELECT id, name, price_wholesale, stock_quantity, image_url
      FROM products p WHERE p.stock_quantity >= 0 AND (${condicionesAnd})
      ORDER BY p.name ASC LIMIT 8`,
     valores
   ).catch(() => []);
-
-  // Intento 2: Solo palabras clave sin genéricas
-  if (resultados.length === 0 && palabras.length > 1) {
-    const PALABRAS_GENERICAS = ["bateria", "modulo", "pantalla", "cable", "cargador", "funda", "tapa", "placa", "pin", "vidrio", "textil", "celular"];
-    const palabrasClave = palabras.filter(p => !PALABRAS_GENERICAS.includes(p));
-    if (palabrasClave.length > 0) {
-      const condClave = palabrasClave.map((_, i) => `p.name ILIKE $${i + 1}`).join(" AND ");
-      const valoresClave = palabrasClave.map(p => `%${p}%`);
-      resultados = await query(
-        `SELECT p.id, p.name, p.price_wholesale, p.stock_quantity, p.image_url
-         FROM products p WHERE p.stock_quantity >= 0 AND (${condClave})
-         ORDER BY p.name ASC LIMIT 8`,
-        valoresClave
-      ).catch(() => []);
-    }
-  }
-
-  // Intento 3: Primera palabra
-  if (resultados.length === 0) {
-    const primeraPalabra = palabras[0];
-    resultados = await query(
-      `SELECT p.id, p.name, p.price_wholesale, p.stock_quantity, p.image_url
-       FROM products p WHERE p.stock_quantity >= 0 AND p.name ILIKE $1
-       ORDER BY p.name ASC LIMIT 8`,
-      [`%${primeraPalabra}%`]
-    ).catch(() => []);
-  }
-
-  return resultados;
 };
+
+ 
 
 // Timer de despedida
 const timers = new Map();
