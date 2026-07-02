@@ -60,24 +60,24 @@ const expandirTermino = (texto) => {
 };
 
 const buscarProductos = async (termino) => {
-  // 1. Normalizamos y separamos palabras significativas
   const terminoExpandido = expandirTermino(normalizar(termino));
   const palabras = terminoExpandido.split(" ").filter(p => p.length > 2);
   
   if (palabras.length === 0) return [];
 
-  // 2. CONSTRUIMOS UN FILTRO ESTRICTO (AND)
-  // Obligamos a que el nombre del producto contenga TODAS las palabras
-  // Ejemplo: "bateria" AND "samsung" AND "a20"
+  // Búsqueda flexible: busca productos que contengan las palabras clave
   const condiciones = palabras.map((_, i) => `p.name ILIKE $${i + 1}`).join(" AND ");
   const valores = palabras.map(p => `%${p}%`);
 
+  // SQL con prioridad: Primero los que contienen "CELULAR" en el nombre
   const sql = `
-    SELECT id, name, price_retail, price_wholesale, stock_quantity, stock_level, available, image_url
+    SELECT id, name, price_wholesale, stock_quantity, image_url
     FROM products p
     WHERE p.available = true 
     AND (${condiciones})
-    ORDER BY p.name ASC 
+    ORDER BY 
+      (CASE WHEN name ILIKE '%CELULAR%' THEN 1 ELSE 2 END) ASC,
+      p.name ASC 
     LIMIT 5`;
 
   return await query(sql, valores);
@@ -248,22 +248,12 @@ if (texto.toLowerCase().includes("efectivo") || texto.toLowerCase().includes("de
 
   if (terminoBusqueda.length > 2) {
     const productos = await buscarProductos(terminoBusqueda);
-
-    if (productos.length === 0) {
-      return `😕 No encontré ese producto en el sistema.\n\nPor favor indicanos la *marca y modelo exacto* (ej: _Samsung A15, Moto G54, iPhone 13_) y qué componente buscás.\n\nO escribí al local directamente:\n📞 https://wa.me/5493865630488`;
-    }
-
-    // Devolver resumen — el webhook envía foto+link por separado
-    const resumen = productos.map(p =>
-`${stockEmoji(p.stock_quantity)} *${p.name}*\n💰 Precio mayorista: ${fmt(Number(p.price_wholesale))}\n🔗 https://concepciontecnologia.vercel.app/mayorista/producto/${p.id}`
-    ).join("\n\n");
-
-    return `Te muestro los resultados de tu busqueda:\n\nLos productos que ingresaste apareceran con su link y foto previa.\n${resumen}\nGracias por confiar en nosotros.\nAtte. Concepcion Tecnologia\n\n🔍 *Esto encontré en el sistema:*`;
+    
+    // Devolvemos el array de productos directamente, el webhook se encarga del resto
+    return { productos }; 
   }
 
-  // RESPUESTA POR DEFECTO
-  return `No entendí bien tu consulta 😅\n\nTe comunicamos con el local para que te ayuden:\n📞 https://wa.me/5493865630488\n\nO escribí directamente lo que buscás. 😊`;
+  return `No entendí bien tu consulta 😅...`;
 };
-
 
 module.exports = { procesarMensaje };

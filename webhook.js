@@ -79,22 +79,26 @@ const enviarImagen = async (telefono, imageUrl, caption) => {
   }
 };
 const buscarProductosDB = async (termino) => {
-  // Limpiamos los términos para búsqueda
   const terminoExpandido = expandirTermino(termino);
   const palabras = terminoExpandido.split(" ").filter(p => p.length > 2);
   if (palabras.length === 0) return [];
 
-  // FORZAMOS AND: El producto DEBE tener todas las palabras ingresadas.
-  // Ejemplo: "Samsung" AND "A20". Si no tiene ambos, no lo trae.
   const condiciones = palabras.map((_, i) => `p.name ILIKE $${i + 1}`).join(" AND ");
   const valores = palabras.map(p => `%${p}%`);
 
+  // Agregamos un CASE en el ORDER BY para que "CELULAR" gane siempre
   const sql = `
     SELECT p.id, p.name, p.price_wholesale, p.stock_quantity, p.image_url
     FROM products p 
     WHERE p.available = true 
     AND (${condiciones})
-    ORDER BY p.name ASC LIMIT 5`;
+    ORDER BY 
+      (CASE 
+        WHEN p.name ILIKE '%CELULAR%' THEN 1 
+        ELSE 2 
+      END) ASC,
+      p.name ASC 
+    LIMIT 5`;
 
   return await query(sql, valores).catch(() => []);
 };
@@ -205,10 +209,10 @@ router.post("/", async (req, res) => {
 
     const esBusqueda = textoNorm.length > 2 && !NO_ES_BUSQUEDA;
 if (esBusqueda) {
-      const productos = await buscarProductosDB(textoNorm);
+  const productos = await buscarProductosDB(textoNorm);
 
-      if (productos.length > 0) {
-        await enviarTexto(telefono, respuesta);
+  if (productos.length > 0) {
+        
 
         for (const p of productos) {
           const link = `https://concepciontecnologia.vercel.app/mayorista/producto/${p.id}`;
