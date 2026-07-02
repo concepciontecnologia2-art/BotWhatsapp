@@ -207,12 +207,12 @@ if (texto.toLowerCase().includes("efectivo") || texto.toLowerCase().includes("de
   // PERFUMERÍA
   if (texto.match(/(perfume|saphirus|vishnu|arabe|fragancia|sahumerio|asad|masa|yara|badee|blush|lattafa)/)) {
     if (texto.match(/(recomienda|recomendas|hombre|mujer|mas vendido)/)) {
-      return `🧴 *Recomendaciones Exclusivas:*\n\n🏆 *El más vendido:* Al Dur Al Maknoon 🥇\n\n🧔 *Para Hombre:* Asad, Masa, Al Dur Al Maknoon Silver.\n👩 *Para Mujer:* Yara 100 ML, Yara Candy, Badee Al Oud Noble BLUSH.\n\n✨ _¡Toda la línea árabe es 100% ORIGINAL!_\n\n¿Querés más info? Escribí *vendedor* o visitá nuestra tienda. 😊`;
+      return `🧴 *Recomendaciones Exclusivas:*\n\n🏆 *El más vendido:* Al Dur Al Maknoon 🥇\n\n🧔 *Para Hombre:* Asad, Masa, Al Dur Al Maknoon Silver.\n👩 *Para Mujer:* Yara 100 ML, Yara Candy, Badee Al Oud Noble BLUSH.\n\n✨ _¡Toda la línea árabe es 100% ORIGINAL!_\n\n¿Querés más info? Escribí *vendedor* o visitá nuestra tienda. 😊\n `;
     }
     if (texto.match(/(economico|barato)/)) {
       return `💰 *Perfumes Económicos:* Tenemos la línea *Maison Alhambra de 30ml* a solo *$20.000*.\n\n¿Querés más info? Escribí *vendedor* o visitá nuestra tienda. 😊`;
     }
-    return `🛍️ *Perfumería & Fragancias:*\n• Toda la línea de *Saphirus* y Sahumerios *Vishnu*.\n• Gran variedad de *Perfumería Árabe* original (*Lattafa*, *Maison Alhambra*, etc.).\n\nEn el local podés sentir las fragancias. 👃\n\n¿Querés más info? Escribí *vendedor* o visitá nuestra tienda. 😊`;
+    return `🛍️ *Perfumería & Fragancias:*\n• Toda la línea de *Saphirus* y Sahumerios *Vishnu*.\n• Gran variedad de *Perfumería Árabe* original (*Lattafa*, *Maison Alhambra*, etc.).\n\nEn el local podés sentir las fragancias. 👃\n\n¿Querés más info? Escribí *vendedor* o visitá nuestra tienda.  😊 \n https://concepciontecnologia.vercel.app/mayorista`;
   }
 
   // ENVÍOS
@@ -258,7 +258,7 @@ if (texto.toLowerCase().includes("efectivo") || texto.toLowerCase().includes("de
 `${stockEmoji(p.stock_quantity)} *${p.name}*\n💰 Precio mayorista: ${fmt(Number(p.price_wholesale))}\n🔗 https://concepciontecnologia.vercel.app/mayorista/producto/${p.id}`
     ).join("\n\n");
 
-    return `Te muestro los resultados de tu busqueda:\n\nLos productos que ingresaste apareceran con su link y foto previa.\n${resumen}\nGracias por confiar en nosotros.\nAtte. Concepcion Tecnologia\n\n🔍 *Esto encontré en el sistema:*`;
+    return `Te muestro los resultados de tu busqueda:\n`;
   }
 
   // RESPUESTA POR DEFECTO
