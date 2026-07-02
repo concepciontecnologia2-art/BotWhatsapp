@@ -83,6 +83,7 @@ const enviarImagen = async (telefono, imageUrl, caption) => {
     console.error("Error enviarImagen:", JSON.stringify(err.response?.data, null, 2));
   }
 };
+
 const buscarProductosDB = async (termino) => {
   // Limpiamos el término de espacios extra
   const cleanTerm = termino.trim();
@@ -111,13 +112,8 @@ const buscarProductosDB = async (termino) => {
   return await query(sqlBase, valores).catch((err) => {
     console.error("Error en búsqueda:", err);
 
-
-
     const resultados = await query(sqlBase, valores);
-console.log("SQL ejecutado:", sqlBase);
-console.log("Valores:", valores);
-console.log("Resultado final:", resultados);
-return resultados;
+
     return [];
   });
 };
