@@ -69,15 +69,23 @@ const enviarTexto = async (telefono, texto) => {
 
 const enviarImagen = async (telefono, imageUrl, caption) => {
   try {
-    await axios.post(
+    const response = await axios.post(
       `https://graph.facebook.com/v18.0/${process.env.WHATSAPP_PHONE_ID}/messages`,
-      { messaging_product: "whatsapp", to: telefono, type: "image", image: { link: imageUrl, caption } },
+      { 
+        messaging_product: "whatsapp", 
+        to: telefono, 
+        type: "image", 
+        image: { link: imageUrl, caption: caption.substring(0, 1024) } // WhatsApp limita captions a 1024 caracteres
+      },
       { headers: { Authorization: `Bearer ${process.env.WHATSAPP_TOKEN}`, "Content-Type": "application/json" } }
     );
+    console.log("DEBUG: Éxito en envío de imagen:", response.data);
   } catch (err) {
-    console.error("Error enviarImagen:", JSON.stringify(err.response?.data, null, 2));
+    // ESTO NOS VA A DECIR LA VERDAD
+    console.error("DEBUG: ERROR CRÍTICO DE WHATSAPP:", JSON.stringify(err.response?.data, null, 2));
   }
 };
+
 const buscarProductosDB = async (termino) => {
   const terminoExpandido = expandirTermino(termino);
   const palabras = terminoExpandido.split(" ").filter(p => p.length > 2);
