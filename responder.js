@@ -62,7 +62,7 @@ const expandirTermino = (texto) => {
 const buscarProductos = async (termino) => {
   // 1. Normalizamos y separamos palabras significativas
   const terminoExpandido = expandirTermino(normalizar(termino));
-  const palabras = terminoExpandido.split(" ").filter(p => p.length > 1);
+  const palabras = terminoExpandido.split(" ").filter(p => p.length > 2);
   
   if (palabras.length === 0) return [];
 
@@ -75,7 +75,7 @@ const buscarProductos = async (termino) => {
   const sql = `
     SELECT id, name, price_retail, price_wholesale, stock_quantity, stock_level, available, image_url
     FROM products p
-     WHERE p.stock_quantity >= 1
+    WHERE p.available = true 
     AND (${condiciones})
     ORDER BY p.name ASC 
     LIMIT 5`;
@@ -189,7 +189,7 @@ SÁBADO DE 9HS A 15HS\n
     return `🛠️ *Información sobre Servicio Técnico:*\n\nNo hacemos servicio técnico de colocación o reparación. 🛠️❌\n\nTrabajamos directo con los técnicos ya que *hay que probar los repuestos en el local*, de lo contrario salen sin garantía con la boleta.\n\n¿Puedo ayudarte con algo más? 😊`;
   }
 // Una vez que el cliente responde, verificás si pregunta por el pago:
-if (texto.toLowerCase().includes("efectivo") || texto.toLowerCase().includes("descuento")|| texto.toLowerCase().includes("haces descuento?")|| texto.toLowerCase().includes("aplicas descuento?")) {
+if (texto.toLowerCase().includes("efectivo") || texto.toLowerCase().includes("descuento")|| texto.toLowerCase().includes("haces decuento?")|| texto.toLowerCase().includes("aplicas descuento?")) {
     return `¡Excelente! Te comento, tenemos beneficios exclusivos para pago en efectivo:
     - 3% off en compras de $150.000.
     - 5% off en compras de $250.000.
@@ -207,12 +207,12 @@ if (texto.toLowerCase().includes("efectivo") || texto.toLowerCase().includes("de
   // PERFUMERÍA
   if (texto.match(/(perfume|saphirus|vishnu|arabe|fragancia|sahumerio|asad|masa|yara|badee|blush|lattafa)/)) {
     if (texto.match(/(recomienda|recomendas|hombre|mujer|mas vendido)/)) {
-      return `🧴 *Recomendaciones Exclusivas:*\n\n🏆 *El más vendido:* Al Dur Al Maknoon 🥇\n\n🧔 *Para Hombre:* Asad, Masa, Al Dur Al Maknoon Silver.\n👩 *Para Mujer:* Yara 100 ML, Yara Candy, Badee Al Oud Noble BLUSH.\n\n✨ _¡Toda la línea árabe es 100% ORIGINAL!_\n\n¿Querés más info? Escribí *vendedor* o visitá nuestra tienda. 😊\n `;
+      return `🧴 *Recomendaciones Exclusivas:*\n\n🏆 *El más vendido:* Al Dur Al Maknoon 🥇\n\n🧔 *Para Hombre:* Asad, Masa, Al Dur Al Maknoon Silver.\n👩 *Para Mujer:* Yara 100 ML, Yara Candy, Badee Al Oud Noble BLUSH.\n\n✨ _¡Toda la línea árabe es 100% ORIGINAL!_\n\n¿Querés más info? Escribí *vendedor* o visitá nuestra tienda. 😊`;
     }
     if (texto.match(/(economico|barato)/)) {
       return `💰 *Perfumes Económicos:* Tenemos la línea *Maison Alhambra de 30ml* a solo *$20.000*.\n\n¿Querés más info? Escribí *vendedor* o visitá nuestra tienda. 😊`;
     }
-    return `🛍️ *Perfumería & Fragancias:*\n• Toda la línea de *Saphirus* y Sahumerios *Vishnu*.\n• Gran variedad de *Perfumería Árabe* original (*Lattafa*, *Maison Alhambra*, etc.).\n\nEn el local podés sentir las fragancias. 👃\n\n¿Querés más info? Escribí *vendedor* o visitá nuestra tienda.  😊 \n https://concepciontecnologia.vercel.app/mayorista`;
+    return `🛍️ *Perfumería & Fragancias:*\n• Toda la línea de *Saphirus* y Sahumerios *Vishnu*.\n• Gran variedad de *Perfumería Árabe* original (*Lattafa*, *Maison Alhambra*, etc.).\n\nEn el local podés sentir las fragancias. 👃\n\n¿Querés más info? Escribí *vendedor* o visitá nuestra tienda. 😊`;
   }
 
   // ENVÍOS
@@ -258,7 +258,7 @@ if (texto.toLowerCase().includes("efectivo") || texto.toLowerCase().includes("de
 `${stockEmoji(p.stock_quantity)} *${p.name}*\n💰 Precio mayorista: ${fmt(Number(p.price_wholesale))}\n🔗 https://concepciontecnologia.vercel.app/mayorista/producto/${p.id}`
     ).join("\n\n");
 
-    return `Te muestro los resultados de tu busqueda:\n`;
+    return `Te muestro los resultados de tu busqueda:\n\nLos productos que ingresaste apareceran con su link y foto previa.\n${resumen}\nGracias por confiar en nosotros.\nAtte. Concepcion Tecnologia\n\n🔍 *Esto encontré en el sistema:*`;
   }
 
   // RESPUESTA POR DEFECTO
