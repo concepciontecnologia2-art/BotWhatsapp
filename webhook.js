@@ -84,32 +84,44 @@ const enviarImagen = async (telefono, imageUrl, caption) => {
   }
 };
 const buscarProductosDB = async (termino) => {
-  // 1. Tomamos el término tal cual llega, sin procesar palabras, para no romper el AND
-  const nombreBuscado = `%${termino.trim()}%`;
+  // Limpiamos el término de espacios extra
+  const cleanTerm = termino.trim();
+  if (!cleanTerm) return [];
 
-  // 2. Buscamos ignorando si es AND o OR, solo buscamos coincidencias
-  // El ORDER BY pone los CELULARES arriba de todo siempre.
-  const sql = `
-    SELECT id, name, price_wholesale, stock_quantity, image_url
-    FROM products p 
-    WHERE p.name ILIKE $1 
-    ORDER BY 
-      (CASE 
-        WHEN name ILIKE 'CELULAR %' THEN 1
-        WHEN name ILIKE 'MODULO %' THEN 2
-        WHEN name ILIKE 'PLACA %' THEN 3
-        ELSE 4 
-      END) ASC,
-      name ASC 
-    LIMIT 5`;
+  // Usamos un único LIKE que busque si el nombre contiene las palabras principales.
+  // Ejemplo: si busca "Samsung A16", buscamos productos que tengan "Samsung" Y "A16"
+  const partes = cleanTerm.split(" ");
+  const condiciones = partes.map(() => `p.name ILIKE ?`).join(" AND ");
+  const valores = partes.map(p => `%${p}%`);
 
-  const resultados = await query(sql, [nombreBuscado]).catch((err) => {
-    console.error("Error BD:", err);
+  // Reemplazamos los '?' por los placeholders correctos de tu base de datos ($1, $2...)
+  let sqlBase = `SELECT id, name, price_wholesale, stock_quantity, image_url 
+                 FROM products p 
+                 WHERE p.stock_quantity >= 0 AND (`;
+  
+  partes.forEach((_, i) => {
+    sqlBase += `p.name ILIKE $${i + 1}`;
+    if (i < partes.length - 1) sqlBase += " AND ";
+  });
+  
+  sqlBase += `) ORDER BY 
+                (CASE WHEN name ILIKE '%CELULAR%' THEN 1 ELSE 2 END) ASC, 
+                name ASC LIMIT 5`;
+
+  return await query(sqlBase, valores).catch((err) => {
+    console.error("Error en búsqueda:", err);
+
+
+
+    const resultados = await query(sqlBase, valores);
+console.log("SQL ejecutado:", sqlBase);
+console.log("Valores:", valores);
+console.log("Resultado final:", resultados);
+return resultados;
     return [];
   });
-
-  return resultados;
 };
+
 
  
 
