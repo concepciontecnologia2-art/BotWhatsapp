@@ -1,14 +1,3 @@
-const { query } = require("./db");
-
-const fmt = (n) =>
-  new Intl.NumberFormat("es-AR", {
-    style: "currency",
-    currency: "ARS",
-    maximumFractionDigits: 0,
-  }).format(n);
-
-const stockEmoji = (quantity) => (quantity > 0 ? "🟢" : "🔴");
-
 const normalizar = (texto) =>
   texto
     .toLowerCase()
@@ -17,71 +6,6 @@ const normalizar = (texto) =>
     .replace(/[^a-z0-9\s]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
-
-const expandirTermino = (texto) => {
-  return texto
-    .replace(/\bmodulos?\b/g, "modulo")
-    .replace(/\bbaterias?\b/g, "bateria")
-    .replace(/\bpantallas?\b/g, "pantalla")
-    .replace(/\bfundas?\b/g, "funda")
-    .replace(/\bcargadores?\b/g, "cargador")
-    .replace(/\bcables?\b/g, "cable")
-    .replace(/\blinternas?\b/g, "linterna")
-    .replace(/\btapas?\b/g, "tapa")
-    .replace(/\bplacas?\b/g, "placa")
-    .replace(/\bpines?\b/g, "pin")
-    .replace(/\bvidrios?\b/g, "vidrio")
-    .replace(/\btemplados?\b/g, "templado")
-    .replace(/\bparlantes?\b/g, "parlante")
-    .replace(/\bauriculares?\b/g, "auricular")
-    .replace(/\bperfumes?\b/g, "perfume")
-    .replace(/\brepuestos?\b/g, "repuesto")
-    .replace(/\bcelulares?\b/g, "celular")
-    .replace(/\bsam\b/g, "samsung")
-    .replace(/\bmoto\b/g, "motorola")
-    .replace(/\biph\b/g, "iphone")
-    .replace(/\bj2 prime\b/g, "samsung j2 prime")
-    .replace(/\bj4\b/g, "samsung j4")
-    .replace(/\bj5\b/g, "samsung j5")
-    .replace(/\bj6\b/g, "samsung j6")
-    .replace(/\ba20\b/g, "samsung a20")
-    .replace(/\ba21\b/g, "samsung a21")
-    .replace(/\ba30\b/g, "samsung a30")
-    .replace(/\ba50\b/g, "samsung a50")
-    .replace(/\ba10\b/g, "samsung a10")
-    .replace(/\ba12\b/g, "samsung a12")
-    .replace(/\ba13\b/g, "samsung a13")
-    .replace(/\ba14\b/g, "samsung a14")
-    .replace(/\ba15\b/g, "samsung a15")
-    .replace(/\ba32\b/g, "samsung a32")
-    .replace(/\bg54\b/g, "motorola g54")
-    .replace(/\bg84\b/g, "motorola g84")
-    .replace(/\bg14\b/g, "motorola g14");
-};
-
-const buscarProductos = async (termino) => {
-  const terminoExpandido = expandirTermino(normalizar(termino));
-  const palabras = terminoExpandido.split(" ").filter(p => p.length > 2);
-  
-  if (palabras.length === 0) return [];
-
-  // Búsqueda flexible: busca productos que contengan las palabras clave
-  const condiciones = palabras.map((_, i) => `p.name ILIKE $${i + 1}`).join(" AND ");
-  const valores = palabras.map(p => `%${p}%`);
-
-  // SQL con prioridad: Primero los que contienen "CELULAR" en el nombre
-  const sql = `
-    SELECT id, name, price_wholesale, stock_quantity, image_url
-    FROM products p
-    WHERE p.available = true 
-    AND (${condiciones})
-    ORDER BY 
-      (CASE WHEN name ILIKE '%CELULAR%' THEN 1 ELSE 2 END) ASC,
-      p.name ASC 
-    LIMIT 5`;
-
-  return await query(sql, valores);
-};
 
 const estaAbierto = () => {
   const now = new Date();
@@ -96,14 +20,7 @@ const estaAbierto = () => {
 };
 
 const procesarMensaje = async (mensaje, tipo = "text") => {
-
-  if (["image", "video", "sticker"].includes(tipo)) {
-    return `📝 Por favor escribí el nombre del producto que buscás y te ayudamos enseguida. 😊`;
-  }
-  if (["audio", "voice"].includes(tipo)) {
-    return `⚠️ Este número no recibe audios ni llamadas. Por favor escribinos tu consulta por texto. ¡Gracias! 😊`;
-  }
-  if (tipo === "document") return null;
+  if (!mensaje || typeof mensaje !== "string") return null;
 
   const textoOriginal = mensaje.trim();
   const texto = normalizar(textoOriginal);
@@ -137,7 +54,7 @@ const procesarMensaje = async (mensaje, tipo = "text") => {
 
   // FACTURA
   if (texto.match(/(factura|comprobante|emiten factura|hacen factura)/)) {
-    return `✅ *¡Sí! Emitimos factura o comprobante de compra.*\n\nPodés solicitarla al momento de tu compra en el local o coordinar con un vendedor.\n\nEscribí *vendedor* si querés coordinar. 👨‍💼`;
+    return `✅ *¡Sí! Emitimos factura o comprobante de compra.*\n\nPodés solicitarla al momento de tu compra en el local o coordinar con un vendedor. 👨‍💼`;
   }
 
   // REDES SOCIALES
@@ -151,51 +68,20 @@ const procesarMensaje = async (mensaje, tipo = "text") => {
     if (abierto) {
       return `✅ *¡Sí, estamos abiertos!*\n\n📍 Calle Independencia 450, Concepción, Tucumán\n🕐 *Lunes a Viernes:* 9:00 a 12:00 hs y 16:00 a 20:00 hs\n🗓️ *Sábados:* 9:00 a 15:00 hs (corrido)\n❌ Domingos y feriados cerrado\n🚗 Zona de fácil estacionamiento\n\n🗺️ https://maps.google.com/?q=Independencia+450+Concepcion+Tucuman`;
     } else {
-      return `😮 *OH NO, ESTAMOS CERRADOS*, pero te atenderemos lo antes posible.\n\n☝️😃 *NUESTROS HORARIOS DE ATENCIÓN*\n🕒 HORARIO LUN A VIER DE 9HS A 12HS Y DE 16HS A 20HS\nSÁBADO DE 9HS A 15HS\n🏪 Calle Independencia 450\n📍 https://maps.google.com/?q=Independencia+450+Concepcion+Tucuman`;
+      return `😮 *OH NO, ESTAMOS CERRADOS*, pero te atenderemos lo antes posible.\n\n☝️😃 *NUESTROS HORARIOS DE ATENCIÓN*\n🕒 LUN A VIER DE 9HS A 12HS Y DE 16HS A 20HS\nSÁBADO DE 9HS A 15HS\n🏪 Calle Independencia 450\n📍 https://maps.google.com/?q=Independencia+450+Concepcion+Tucuman`;
     }
-  }
-
-  // SALUDO → MENÚ
-  if (texto.match(/^(hola|buenas|buen[ao]s|hi|hey|ola|buenas noches|buenos dias|buenas tardes|buen dia|buena tarde|buena noche)/) && !texto.match(/(precio|cuanto|tenes|hay|stock|busco|quiero|modulo|bateria|pantalla|funda|cable)/)) {
-    return `👋 ¡Bienvenido a *Concepción Tecnología*!\nEspecialistas en repuestos para celulares, electrónica y mucho más.\n\n¿En qué podemos ayudarte?\n\n1️⃣ Consultar un producto\n2️⃣ Horarios y ubicación 📍\n3️⃣ Hablar con un vendedor por WhatsApp 👨‍💼\n\n_Escribí el número de opción o tu consulta directamente._`;
-  }
-
-  // OPCIONES DEL MENÚ
-  if (texto === "1") {
-    return `🔍 ¡Perfecto! Escribime el nombre del producto o repuesto que buscás.\n\nEjemplo: _batería samsung a20_, _módulo motorola g54_, _pava electrica_, linternas...etc y mucho mas!`;
-  }
-  if (texto === "2") {
-    const abierto = estaAbierto();
-    if (abierto) {
-      return `☝️😃NUESTROS HORARIOS DE ATENCIÓN\n 
-🕒HORARIO LUN A VIER DE 9HS A 12HS Y DE 16HS A 20HS\n 
-SÁBADO DE 9HS A 15HS\n
-🏪Calle Independencia 450\n 
-📍 UBICACIÓN\n🗺️ https://maps.google.com/?q=Independencia+450+Concepcion+Tucuman`;
-    } else {
-      return `☝️😃NUESTROS HORARIOS DE ATENCIÓN\n  
-🕒HORARIO LUN A VIER DE 9HS A 12HS Y DE 16HS A 20HS\n  
-SÁBADO DE 9HS A 15HS\n 
-🏪Calle Independencia 450\n 
-📍 UBICACIÓN\n 🗺️ https://maps.google.com/?q=Independencia+450+Concepcion+Tucuman`;
-    }
-  }
-  if (texto === "3") {
-    return `👨‍💼 *¡Claro! Te comunicamos con nuestro equipo.*\n\n✍️ Escribinos directamente y te atendemos:\n📲 https://wa.me/5493865630488\n\n🕐 HORARIO LUN A VIER DE 9HS A 12HS Y DE 16HS A 20HS\nSÁBADO DE 9HS A 15HS`;
   }
 
   // REPARACIONES
   if (texto.match(/(reparacion|arregla|arreglan|servicio tecnico|colocacion|cambiar pantalla|cambiar bateria|cuanto cuesta cambiar|cuanto tardan)/)) {
     return `🛠️ *Información sobre Servicio Técnico:*\n\nNo hacemos servicio técnico de colocación o reparación. 🛠️❌\n\nTrabajamos directo con los técnicos ya que *hay que probar los repuestos en el local*, de lo contrario salen sin garantía con la boleta.\n\n¿Puedo ayudarte con algo más? 😊`;
   }
-// Una vez que el cliente responde, verificás si pregunta por el pago:
-if (texto.toLowerCase().includes("efectivo") || texto.toLowerCase().includes("descuento")|| texto.toLowerCase().includes("haces decuento?")|| texto.toLowerCase().includes("aplicas descuento?")) {
-    return `¡Excelente! Te comento, tenemos beneficios exclusivos para pago en efectivo:
-    - 3% off en compras de $150.000.
-    - 5% off en compras de $250.000.
-    
-    ¿Cuál es el monto total aproximado de tu compra para ver qué descuento te podemos aplicar?`;
-}
+
+  // EFECTIVO / DESCUENTO
+  if (texto.match(/(efectivo|descuento|haces descuento|aplicas descuento)/)) {
+    return `¡Excelente! Te comento, tenemos beneficios exclusivos para pago en efectivo:\n- 3% off en compras de $150.000.\n- 5% off en compras de $250.000.\n\n¿Cuál es el monto total aproximado de tu compra para ver qué descuento te podemos aplicar?`;
+  }
+
   // MAYORISTA / TÉCNICOS
   if (texto.match(/(mayorista|tecnico|tecnicos|lista de precios|registrarme|reservar|reserva)/)) {
     if (texto.match(/(reserva|reservar)/)) {
@@ -235,25 +121,9 @@ if (texto.toLowerCase().includes("efectivo") || texto.toLowerCase().includes("de
     return `👨‍💼 *¡Claro! Te comunicamos con nuestro equipo.*\n\n✍️ Escribinos directamente y te atendemos:\n📲 https://wa.me/5493865630488\n\n🕐 HORARIO LUN A VIER DE 9HS A 12HS Y DE 16HS A 20HS\nSÁBADO DE 9HS A 15HS`;
   }
 
-  // BÚSQUEDA DINÁMICA
-  let limpio = texto
-    .replace(/(hola|buenas|buenos dias|buenas tardes|buenas noches|buen dia|che|como estas|todo bien)/g, "")
-    .replace(/(consulta|queria saber|por favor|porfa|me podrias decir)/g, "")
-    .replace(/(precio|cuanto sale|cuanto cuesta|cual es el precio|valor)/g, "")
-    .replace(/(stock|tienen|hay|busco|quiero|necesito|me das|tenes|disponible|conseguis)/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
-
-  const terminoBusqueda = expandirTermino(limpio);
-
-  if (terminoBusqueda.length > 2) {
-    const productos = await buscarProductos(terminoBusqueda);
-    
-    // Devolvemos el array de productos directamente, el webhook se encarga del resto
-    return { productos }; 
-  }
-
-  return `No entendí bien tu consulta 😅...`;
+  // RESPUESTA POR DEFECTO 
+  // (Si el usuario escribió algo que no es búsqueda, ni saludo, ni matcheó con nada de arriba)
+  return `😅 No entendí bien tu consulta.\n\nEscribí directamente el nombre del repuesto o producto que buscás, o escribí *vendedor* para hablar con una persona de nuestro equipo.`;
 };
 
 module.exports = { procesarMensaje };
