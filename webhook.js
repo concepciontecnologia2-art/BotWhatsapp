@@ -142,6 +142,16 @@ router.post("/", async (req, res) => {
   try {
     const body = req.body;
     if (body.object !== "whatsapp_business_account") return res.sendStatus(404);
+    const statuses = body.entry?.[0]?.changes?.[0]?.value?.statuses;
+    if (statuses && statuses.length > 0) {
+      const estado = statuses[0];
+      if (estado.status === "failed") {
+        console.error(`🚨 META BLOQUEÓ EL MENSAJE. Motivo exacto:`, JSON.stringify(estado.errors, null, 2));
+      } else {
+        console.log(`📡 Estado del mensaje: ${estado.status}`);
+      }
+      return res.sendStatus(200);
+    }
 
     const messages = body.entry?.[0]?.changes?.[0]?.value?.messages;
     if (!messages || messages.length === 0) return res.sendStatus(200);
