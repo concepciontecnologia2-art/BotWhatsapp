@@ -57,13 +57,20 @@ const stockEmoji = (q) => (q > 0 ? "🟢" : "🔴");
 
 const enviarTexto = async (telefono, texto) => {
   try {
-    await axios.post(
+    console.log(`⏳ Intentando enviar mensaje a ${telefono}...`);
+    const response = await axios.post(
       `https://graph.facebook.com/v18.0/${process.env.WHATSAPP_PHONE_ID}/messages`,
       { messaging_product: "whatsapp", to: telefono, type: "text", text: { body: texto } },
       { headers: { Authorization: `Bearer ${process.env.WHATSAPP_TOKEN}`, "Content-Type": "application/json" } }
     );
+    console.log(`✅ ¡ÉXITO! Mensaje entregado a Meta (ID: ${response.data.messages[0].id})`);
   } catch (err) {
-    console.error("Error enviarTexto:", JSON.stringify(err.response?.data, null, 2));
+    console.error("❌ ERROR CRÍTICO ENVIANDO MENSAJE:");
+    if (err.response) {
+      console.error(JSON.stringify(err.response.data, null, 2));
+    } else {
+      console.error(err.message);
+    }
   }
 };
 
