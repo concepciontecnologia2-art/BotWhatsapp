@@ -217,7 +217,7 @@ router.post("/", async (req, res) => {
         await enviarTexto(telefono, msjFinal);
         return res.sendStatus(200);
       } else {
-        await enviarTexto(telefono, `😕 No encontré resultados exactos para "${textoNorm}".\n\nPor favor indicanos la marca y modelo (ej: _Moto G54_, _Samsung A15_) o buscá en nuestra tienda:\n🌐 https://concepciontecnologia.vercel.app/mayorista`);
+        await enviarTexto(telefono, ` No encontré resultados exactos para "${textoNorm}".\n\nPor favor indicanos la marca y modelo (ej: _Moto G54_, _Samsung A15_) o buscá en nuestra tienda:\n🌐 https://concepciontecnologia.vercel.app/mayorista`);
         return res.sendStatus(200);
       }
     }
