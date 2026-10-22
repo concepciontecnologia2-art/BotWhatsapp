@@ -103,25 +103,7 @@ const buscarProductosDB = async (termino) => {
   return resultados;
 };
 
-// Timer de despedida — separado por usuario
-const timers = new Map();
-const enviandoDespedida = new Set(); // evitar bucle
 
-const iniciarTimer = (telefono) => {
-  if (timers.has(telefono)) {
-    clearTimeout(timers.get(telefono));
-  }
-  const timer = setTimeout(async () => {
-    console.log(`⏱️ Enviando despedida a ${telefono}`);
-    enviandoDespedida.add(telefono);
-    await enviarTexto(telefono,
-      `🙂 Parece que ya no estás aquí.\n\n🙏 *¡Muchas gracias por comunicarte con nosotros!*\n\n🫡 Si necesitás algo más recordá que estamos a tu disposición!\n\n👋😁 ¡Que tengas un excelente día!`
-    );
-    timers.delete(telefono);
-    setTimeout(() => enviandoDespedida.delete(telefono), 10000);
-  }, 5 * 60 * 1000);
-  timers.set(telefono, timer);
-};
 
 // Verificación webhook
 router.get("/", (req, res) => {
