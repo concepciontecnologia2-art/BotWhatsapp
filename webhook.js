@@ -74,8 +74,6 @@ const enviarTexto = async (telefono, texto) => {
   }
 };
 
-// Se eliminó la función enviarImagen ya que no la usaremos para evitar costos.
-
 const buscarProductosDB = async (termino) => {
   const terminoExpandido = expandirTermino(termino);
   const palabras = terminoExpandido.split(" ").filter(p => p.length > 2);
@@ -103,8 +101,6 @@ const buscarProductosDB = async (termino) => {
   return resultados;
 };
 
-
-
 // Verificación webhook
 router.get("/", (req, res) => {
   const mode = req.query["hub.mode"];
@@ -119,11 +115,14 @@ router.get("/", (req, res) => {
 });
 
 const mensajesProcesados = new Set();
-// Recibir mensajes
+
+// Recibir mensajes y actualizaciones de Meta
 router.post("/", async (req, res) => {
   try {
     const body = req.body;
     if (body.object !== "whatsapp_business_account") return res.sendStatus(404);
+
+    // --- DETECTOR DE ESTADOS Y ERRORES DE META ---
     const statuses = body.entry?.[0]?.changes?.[0]?.value?.statuses;
     if (statuses && statuses.length > 0) {
       const estado = statuses[0];
@@ -145,16 +144,11 @@ router.post("/", async (req, res) => {
     // --- ESCUDO ANTI-BUCLE ---
     const messageId = mensaje.id;
     if (mensajesProcesados.has(messageId)) {
-        return res.sendStatus(200);
+      return res.sendStatus(200);
     }
     mensajesProcesados.add(messageId);
     setTimeout(() => mensajesProcesados.delete(messageId), 300000);
 
-    if (enviandoDespedida.has(telefono)) {
-      return res.sendStatus(200);
-    }
-
-    iniciarTimer(telefono);
     console.log(`📩 Mensaje de ${telefono} (tipo: ${tipo})`);
 
     if (["image", "video", "sticker"].includes(tipo)) {
@@ -183,16 +177,15 @@ router.post("/", async (req, res) => {
         .trim()
     );
 
-    // --- NUEVA LÓGICA DE BIENVENIDA Y BÚSQUEDA ---
+    // --- LÓGICA DE BIENVENIDA Y BÚSQUEDA ---
     const ES_SALUDO = /^(hola|buenas|buen[ao]s|hi|hey|ola|buenas noches|buenos dias|buenas tardes|buen dia)$/.test(textoNorm.replace(/[^a-z]/g, ""));
     const NO_ES_BUSQUEDA = /^[123]$/.test(texto) ||
       /^(horario|factura|envio|pago|redes|vendedor|mayorista|tecnico|pedido|web|reparacion|perfume|gracias|chau|adios)/i.test(textoNorm);
 
-    // Si es un saludo directo o un inicio de chat, mandamos el mensaje integral.
     if (ES_SALUDO) {
-        const msjBienvenida = `👋 ¡Hola! Bienvenido a *Concepción Tecnología*.\n\n🕐 *Nuestros horarios:*\n• Lunes a Viernes: 9:00 a 12:00 y 16:00 a 20:00 hs\n• Sábados: 9:00 a 15:00 hs (corrido)\n📍 *Ubicación:* Calle Independencia 450, Concepción, Tucumán\n🗺️ Ver en mapa: https://maps.google.com/?q=Independencia+450+Concepcion+Tucuman\n\n🔍 *¿Qué estás buscando?*\nEscribí directamente el nombre del producto o repuesto (ej: _módulo A16_, _batería A20_, _funda_).\n\n📸 Para ver la foto y detalles del producto, ingresá en el link que te aparecerá en la respuesta.\n\n¡Gracias por elegirnos! 😊\n_Atte. Concepción Tecnología_`;
-        await enviarTexto(telefono, msjBienvenida);
-        return res.sendStatus(200);
+      const msjBienvenida = `👋 ¡Hola! Bienvenido a *Concepción Tecnología*.\n\n🕐 *Nuestros horarios:*\n• Lunes a Viernes: 9:00 a 12:00 y 16:00 a 20:00 hs\n• Sábados: 9:00 a 15:00 hs (corrido)\n📍 *Ubicación:* Calle Independencia 450, Concepción, Tucumán\n🗺️ Ver en mapa: https://maps.google.com/?q=Independencia+450+Concepcion+Tucuman\n\n🔍 *¿Qué estás buscando?*\nEscribí directamente el nombre del producto o repuesto (ej: _módulo A16_, _batería A20_, _funda_).\n\n📸 Para ver la foto y detalles del producto, ingresá en el link que te aparecerá en la respuesta.\n\n¡Gracias por elegirnos! 😊\n_Atte. Concepción Tecnología_`;
+      await enviarTexto(telefono, msjBienvenida);
+      return res.sendStatus(200);
     }
 
     const esBusqueda = textoNorm.length > 2 && !NO_ES_BUSQUEDA;
@@ -202,29 +195,25 @@ router.post("/", async (req, res) => {
       console.log("DEBUG: Productos listos para armar string:", productos.length);
 
       if (productos.length > 0) {
-        // Armamos un array con la información de cada producto
         const listaProductos = productos.map(p => {
-            const link = `https://concepciontecnologia.vercel.app/mayorista/producto/${p.id}`;
-            const precio = Number(String(p.price_wholesale).replace(/[^0-9.-]+/g, "") || 0);
-            return `${stockEmoji(p.stock_quantity)} *${p.name}*\n💰 Precio: ${fmt(precio)}\n📦 Stock: ${p.stock_quantity} unidades\n🔗 ${link}`;
+          const link = `https://concepciontecnologia.vercel.app/mayorista/producto/${p.id}`;
+          const precio = Number(String(p.price_wholesale).replace(/[^0-9.-]+/g, "") || 0);
+          return `${stockEmoji(p.stock_quantity)} *${p.name}*\n💰 Precio: ${fmt(precio)}\n📦 Stock: ${p.stock_quantity} unidades\n🔗 ${link}`;
         });
 
-        // Unimos todos los productos con un separador y agregamos el encabezado y cierre
         const msjFinal = `🔍 *Resultados de tu búsqueda:*\n\n${listaProductos.join("\n\n-------------------\n\n")}\n\n🛒 *Para realizar la compra o ver la foto completa, ingresá en el link del producto que elijas.*`;
         
-        // ¡Enviamos TODO en un solo mensaje!
         await enviarTexto(telefono, msjFinal);
         return res.sendStatus(200);
       } else {
-        await enviarTexto(telefono, ` No encontré resultados exactos para "${textoNorm}".\n\nPor favor indicanos la marca y modelo (ej: _Moto G54_, _Samsung A15_) o buscá en nuestra tienda:\n🌐 https://concepciontecnologia.vercel.app/mayorista`);
+        await enviarTexto(telefono, `😕 No encontré resultados exactos para "${textoNorm}".\n\nPor favor indicanos la marca y modelo (ej: _Moto G54_, _Samsung A15_) or buscá en nuestra tienda:\n🌐 https://concepciontecnologia.vercel.app/mayorista`);
         return res.sendStatus(200);
       }
     }
 
-    // Si no es saludo, ni búsqueda, pasamos al responder.js para las respuestas estáticas (horarios, gracias, etc.)
     const respuesta = await procesarMensaje(texto, tipo);
     if (respuesta) {
-        await enviarTexto(telefono, respuesta);
+      await enviarTexto(telefono, respuesta);
     }
     
     console.log(`✅ Respuesta enviada a ${telefono}`);
